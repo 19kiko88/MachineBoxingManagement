@@ -1,6 +1,6 @@
 # Machine Boxing Management_v1.3.6
 
-CAE 儲位管理
+CAE 儲位管理(Frontent：Angular. Backend：.Net 6 Web API)
 
 
 ## 專案說明
