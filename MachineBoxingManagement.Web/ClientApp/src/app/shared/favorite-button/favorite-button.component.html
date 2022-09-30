@@ -1,0 +1,14 @@
+<button mat-icon-button (click)="toggleSelected()">
+  <mat-icon *ngIf="selected"
+            aria-label="Example icon-button with a heart icon"
+            [ngStyle]="{'color':'#ffd740'}"
+            >
+    star
+  </mat-icon>
+
+  <mat-icon *ngIf="!selected"
+            aria-label="Example icon-button with a heart icon">
+    star_border
+  </mat-icon>
+
+</button>

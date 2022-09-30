@@ -1,0 +1,161 @@
+<form [formGroup]="boxInForm">
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>庫房：</label>
+      <select #_sel_location
+              class="form-control"
+              name="sel_location"
+              formControlName="sel_location">
+        <option *ngFor="let item of locations" [value]="item.id">
+          {{ item.name }}
+        </option>
+      </select>
+    </div>
+    <div class="form-group col-md-4">
+      <label>機台選項：</label>
+      <select #_sel_option
+              class="form-control"
+              name="sel_option"
+              formControlName="sel_option"
+              (change)="ProcessingPN(_chk_temp_save.checked, _txt_pn.value, _sel_location.value, _sel_option.value, _sel_style.value, _txt_ssn.value)">
+        <option *ngFor="let item of options" [value]="item.id">
+          {{ item.name }}
+        </option>
+      </select>
+    </div>
+    <div class="form-group col-md-4">
+      <label>樣式選項：</label>
+      <select #_sel_style
+              class="form-control"
+              name="sel_style"
+              formControlName="sel_style"
+              (change)="ProcessingPN(_chk_temp_save.checked, _txt_pn.value, _sel_location.value, _sel_option.value, _sel_style.value, _txt_ssn.value)">
+        <option *ngFor="let item of style" [value]="item.id">
+          {{ item.name }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>P/N：</label>
+      <input #_txt_pn
+             name="txt_pn"
+             formControlName="txt_pn"
+             (keyup.enter)="ProcessingPN(_chk_temp_save.checked, _txt_pn.value, _sel_location.value, _sel_option.value, _sel_style.value, _txt_ssn.value)"
+             class="form-control">
+    </div>
+
+    <div class="form-group col-md-8" style="align-items:center; display:inline-flex">
+      <span style="text-align:center;">{{pn_desc}}</span>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>SSN：</label>
+      <input #_txt_ssn
+             formControlName="txt_ssn"
+             class="form-control">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>Model：</label>
+      <input formControlName="txt_model"
+             class="form-control">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>裝箱系列：</label>
+      <input #_txt_box_series
+             formControlName="txt_box_series"
+             class="form-control"
+             (keyup.enter)="ProcessingBoxSeries(_txt_box_series.value, _sel_location.value, _chk_temp_save.checked)"
+            >
+    </div>
+  </div>
+
+
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>箱號：</label>
+      <app-counter-plus-minus #_txt_box_serial
+                              [inputMinValue]="1"
+                              [inputMaxValue]="99999"
+                              (current_value)='OnChangeBoxingSerial($event)'></app-counter-plus-minus>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>箱內數量：</label>
+      <input formControlName="txt_box_qty"
+             class="form-control"
+             disabled>
+
+    </div>
+
+    <div class="form-group col-md-8" style="align-items:center; display:inline-flex">
+      <span style="text-align:center;" *ngIf="stocking_info_qty_desc" else alarm_msg>{{stocking_info_qty_desc}}</span>
+
+      <span #alarm_msg class=blink> {{alarmMsg}}</span>
+    </div>
+
+
+  </div>
+
+
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>烏龜車層數：</label>
+      <app-counter-plus-minus #_txt_box_turtle_level
+                              [inputMinValue]="1"
+                              [inputMaxValue]="5"></app-counter-plus-minus>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-4 col-md-4" style="align-items:end; display:inline-flex">
+      <div class="form-check" style="text-align:center;">
+        <input
+               formControlName ="chk_buffer_area"
+               #_is_buffer_area
+               type="checkbox"
+               />               
+        <label>暫存區</label>
+      </div>
+    </div>
+
+    <div class="form-group col-4 col-md-4" style="align-items:end; display:inline-flex">
+      <div class="form-check" style="text-align:center;">
+        <input #_chk_temp_save
+               type="checkbox"
+               [checked]="temp_save"
+               (change)="onSaveCheckboxChange(_chk_temp_save.checked)" />
+        <label>立即暫存?</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-3 col-md-3 ">
+      <button type="submit" class="btn btn-primary" (click)="saveTemp()">暫存資料</button>
+    </div>
+
+    <div class="form-group col-3 col-md-3">
+      <button type="submit" class="btn btn-primary" (click)="openWindow()">查看暫存</button>
+    </div>
+
+    <div class="form-group col-3 col-md-3">
+      <button type="submit" class="btn btn-primary" (click)="batchSave()">批次儲存</button>
+    </div>
+  </div>
+</form>
+
+<app-loader [loader]="isLoading"></app-loader>

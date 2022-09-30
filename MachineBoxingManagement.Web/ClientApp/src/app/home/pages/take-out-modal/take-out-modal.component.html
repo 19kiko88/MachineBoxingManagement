@@ -1,0 +1,183 @@
+<div class="modal-header my-modal-header">
+  <h4 class="modal-title">機台取出</h4>
+</div>
+
+<div class="modal-body">
+  <div class="container container-width-max">
+    <div id="temp-table" class="table-responsive">
+      <table mat-table #table [dataSource]="dataSource" class="table table-hover">
+
+        <ng-container matColumnDef="Favorite">
+          <th mat-header-cell *matHeaderCellDef>
+            暫存
+            <mat-checkbox (change)="$event ? masterToggle_Favorite() : null"
+                          [checked]="selection_Favorite.hasValue() && isAllSelected_Favorite()"
+                          [indeterminate]="selection_Favorite.hasValue() && !isAllSelected_Favorite()">
+            </mat-checkbox>
+          </th>
+
+          <td mat-cell *matCellDef="let row">
+            <mat-checkbox
+                          (click)="$event.stopPropagation()"
+                          (change)="$event ? changeFavorite(row) : null"
+                          [checked]="selection_Favorite.isSelected(row)">
+            </mat-checkbox>
+
+          </td>
+        </ng-container>
+
+
+        <!-- Serial No Column -->
+        <ng-container matColumnDef="SerialNo">
+          <th mat-header-cell *matHeaderCellDef> # </th>
+          <td mat-cell *matCellDef="let element; let i = index;"> {{i+1}} </td>
+        </ng-container>
+
+        <!-- Checkbox Column -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef>
+            取出?
+            <mat-checkbox (change)="$event ? masterToggle() : null"
+                          [checked]="selection.hasValue() && isAllSelected()"
+                          [indeterminate]="selection.hasValue() && !isAllSelected()">
+            </mat-checkbox>
+          </th>
+
+          <td mat-cell *matCellDef="let row">
+            <mat-checkbox *ngIf="row.status_Id == 666"
+                          (click)="$event.stopPropagation()"
+                          (change)="$event ? selection.toggle(row) : null"
+                          [checked]="selection.isSelected(row)">
+            </mat-checkbox>
+
+            <mat-checkbox *ngIf="row.status_Id == 777"
+                          [disabled]="true"
+                          [checked]="true">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="PartNumber">
+          <th mat-header-cell *matHeaderCellDef> 料號 </th>
+          <td mat-cell *matCellDef="let element"> {{element.part_Number}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="select_BufferArea">
+          <th mat-header-cell *matHeaderCellDef>
+            暫存區
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <mat-checkbox (click)="$event.stopPropagation()"
+                          (change)="changeBufferArea(element)"
+                          [checked]="element.is_Buffer_Area"
+                          [disabled]="element.status_Id == 777 ? true :  null">
+            </mat-checkbox>
+
+
+
+            <!--{{element.status_Id}} {{element.is_Buffer_Area}}-->
+
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="BoxingName">
+          <th mat-header-cell *matHeaderCellDef> 箱名 </th>
+          <td mat-cell *matCellDef="let element"> {{element.boxing_Series}} </td>
+        </ng-container>
+
+        ne
+        -c
+
+        <ng-container matColumnDef="BoxingSerial">
+          <th mat-header-cell *matHeaderCellDef> 箱號 </th>
+          <td mat-cell *matCellDef="let element">
+            {{element.boxing_Serial}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="StackLevel">
+          <th mat-header-cell *matHeaderCellDef> 第幾層 </th>
+          <td mat-cell *matCellDef="let element">
+            {{element.turtle_Level}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Model">
+          <th mat-header-cell *matHeaderCellDef> 機種 </th>
+          <td mat-cell *matCellDef="let element"> {{element.model}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Description">
+          <th mat-header-cell *matHeaderCellDef> 品規 </th>
+          <td mat-cell *matCellDef="let element"> {{element.desc}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="InStockDate">
+          <th mat-header-cell *matHeaderCellDef> 入庫日期 </th>
+          <td mat-cell *matCellDef="let element"> {{element.insDate}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Location">
+          <th mat-header-cell *matHeaderCellDef> 地點 </th>
+          <td mat-cell *matCellDef="let element"> {{element.boxing_Location_Cn}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="BoxingOption">
+          <th mat-header-cell *matHeaderCellDef> 選項 </th>
+          <td mat-cell *matCellDef="let element"> {{element.boxing_Option_Cn}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Operator">
+          <th mat-header-cell *matHeaderCellDef> 操作者 </th>
+          <td mat-cell *matCellDef="let element"> {{element.operator}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="OperateTime">
+          <th mat-header-cell *matHeaderCellDef> 操作日期 </th>
+          <td mat-cell *matCellDef="let element"> {{element.operateTime}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="TakeOutOperator">
+          <th mat-header-cell *matHeaderCellDef> 取出操作者 </th>
+          <td mat-cell *matCellDef="let element"> {{element.takerOut_Operator}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="TakeOutOperateTime">
+          <th mat-header-cell *matHeaderCellDef> 取出操作日期 </th>
+          <td mat-cell *matCellDef="let element"> {{element.takeOut_OperateTime}} </td>
+        </ng-container>
+
+        <!--<ng-container matColumnDef="SSN">
+    <th mat-header-cell *matHeaderCellDef> SSN </th>
+    <td mat-cell *matCellDef="let element"> {{element.ssn}} </td>
+  </ng-container>-->
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+
+        <tr [ngClass]="{'make-gold': i == lastRow, 'make-red': i == lastRow && isFullBox == true}" mat-row *matRowDef="let row; let i = index; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+
+
+<div class="modal-footer">
+
+  <button style="width:100%" type="button" class="btn btn-primary" (click)="exportTempData()">輸出Excel</button>
+
+  <button style="width:100%" type="button" class="btn btn-primary" (click)="saveChange()">儲存變更</button>
+
+  <button style="width:100%" type="button" class="btn btn-primary" onclick="window.close();">關閉</button>
+
+</div>
+
+<app-loader [loader]="isLoading"></app-loader>
+
+
+
+
+
+
+

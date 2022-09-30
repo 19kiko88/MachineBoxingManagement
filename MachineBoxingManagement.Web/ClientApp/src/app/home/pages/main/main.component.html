@@ -1,0 +1,34 @@
+
+    <label for="inputEmail4">操作者：</label>
+    <input [ngModel]="userName"
+           (ngModelChange)="onUserNameChange($event)"
+           style="width:50%"
+           class="form-control"
+           value="{{userName}}">
+
+    <br />
+
+    <ul ngbNav #nav="ngbNav" [(activeId)]="active" class="nav-tabs">
+      <li [ngbNavItem]="1">
+        <a ngbNavLink>裝箱維護</a>
+        <ng-template ngbNavContent>
+          <app-box-in [activeNo]="1"
+                      [isMultiOpen]="isMultiOpen"
+                      [inputUserName]="userName"></app-box-in>
+        </ng-template>
+
+      </li>
+
+      <li [ngbNavItem]="2">
+        <a ngbNavLink>取出維護</a>
+        <ng-template ngbNavContent>
+          <app-box-out [activeNo]="2"
+                       [inputUserName]="userName"></app-box-out>
+        </ng-template>
+      </li>
+    </ul>
+
+    <div [ngbNavOutlet]="nav"></div>
+
+
+

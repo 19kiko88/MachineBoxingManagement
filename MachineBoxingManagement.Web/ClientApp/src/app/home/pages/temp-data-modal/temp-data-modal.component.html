@@ -1,0 +1,111 @@
+<div class="modal-header my-modal-header">
+  <h4 class="modal-title">暫存清單</h4>
+</div>
+
+<div class="modal-body">
+  <div class="container container-width-max">
+    <div id="temp-table" class="table-responsive">
+      <table mat-table #table [dataSource]="dataSource" class="table table-hover">
+
+        <!--<ng-container matColumnDef="Favorite">
+          <th mat-header-cell *matHeaderCellDef>暫存</th>
+          <td mat-cell *matCellDef="let element">
+            <app-favorite-button [inputTakeOutElement]="element"
+                                 [selected]="element.is_Favorite"></app-favorite-button>
+          </td>
+        </ng-container>-->
+        <ng-container matColumnDef="Favorite">
+          <th mat-header-cell *matHeaderCellDef>
+            暫存
+            <mat-checkbox (change)="$event ? masterToggle_Favorite() : null"
+                          [checked]="selection_Favorite.hasValue() && isAllSelected_Favorite()"
+                          [indeterminate]="selection_Favorite.hasValue() && !isAllSelected_Favorite()">
+            </mat-checkbox>
+          </th>
+
+          <td mat-cell *matCellDef="let row">
+            <mat-checkbox
+                          (click)="$event.stopPropagation()"
+                          (change)="$event ? selection_Favorite.toggle(row) : null"
+                          [checked]="selection_Favorite.isSelected(row)">
+            </mat-checkbox>
+
+          </td>
+        </ng-container>
+
+
+        <!-- Serial No Column -->
+        <ng-container matColumnDef="SerialNo">
+          <th mat-header-cell *matHeaderCellDef> # </th>
+          <td mat-cell *matCellDef="let element; let i = index;"> {{i+1}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="PartNumber">
+          <th mat-header-cell *matHeaderCellDef> 料號 </th>
+          <td mat-cell *matCellDef="let element"> {{element.part_Number}} </td>
+        </ng-container>
+
+
+        <ng-container matColumnDef="BoxingName">
+          <th mat-header-cell *matHeaderCellDef> 箱名 </th>
+          <td mat-cell *matCellDef="let element"> {{element.boxing_Series}} </td>
+        </ng-container>
+
+        ne
+        -c
+
+        <ng-container matColumnDef="BoxingSerial">
+          <th mat-header-cell *matHeaderCellDef> 箱號 </th>
+          <td mat-cell *matCellDef="let element">
+            {{element.boxing_Serial}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="StackLevel">
+          <th mat-header-cell *matHeaderCellDef> 第幾層 </th>
+          <td mat-cell *matCellDef="let element">
+            {{element.turtle_Level}}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Model">
+          <th mat-header-cell *matHeaderCellDef> 機種 </th>
+          <td mat-cell *matCellDef="let element"> {{element.model}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Description">
+          <th mat-header-cell *matHeaderCellDef> 品規 </th>
+          <td mat-cell *matCellDef="let element"> {{element.desc}} </td>
+        </ng-container>
+
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; let i = index; columns: displayedColumns;"></tr>
+
+
+      </table>
+    </div>
+  </div>
+
+</div>
+
+
+
+<div class="modal-footer">
+
+  <button style="width:100%" type="button" class="btn btn-primary" (click)="exportFavoriteData()">輸出Excel</button>
+
+  <button style="width:100%" type="button" class="btn btn-primary" (click)="closeModal()">儲存關閉</button>
+
+  <button style="width:100%" type="button" class="btn btn-primary" (click)="activeModal.close('Close click')">關閉</button>
+
+</div>
+
+<app-loader [loader]="isLoading"></app-loader>
+
+
+
+
+
+
+

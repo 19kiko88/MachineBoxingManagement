@@ -1,0 +1,111 @@
+
+.table-responsive {
+  overflow-x: scroll;
+  overflow-y: scroll;
+  width: 100%;
+  height: 700px;
+}
+
+.table {
+  border-collapse: separate !important; /*避免sticky欄位邊框跑掉*/
+}
+
+.app-table {
+  font-size: 8px;
+}
+
+.mat-cell {
+  padding: 10px;
+  border-right: 1px solid lightgrey;
+  text-align: center;
+  min-width: 100px;
+  white-space: nowrap; /*不換行*/
+  vertical-align: middle; /*垂直置中*/
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+.mat-header-cell {
+  padding: 2px;
+  border-right: 1px solid lightgrey;
+  text-align: center;
+  background-color: white !important;
+}
+
+.mat-table-sticky {
+  background-color: darkgray;
+}
+
+.mat-header-row {
+  top: 0;
+  z-index: 10;
+  background: white;
+  height: 30px;
+}
+
+tr.mat-row {
+  border: 1px solid #e7e7e7;
+  height: 30px;
+}
+
+/*使用[sticky] = true要加上下面css避免td兩邊出現多餘空白
+  ref：https://stackoverflow.com/questions/54338378/angular-material-sticky-column-more-than-1-column
+*/
+.mat-column-SerialNo {
+  left: 0px;
+  width: 100px
+}
+
+.mat-column-select {
+  min-width: 100px;
+  background-color: darkgray;
+  position: sticky !important; /*手動固定*/
+  left: 100px !important; /*控制sticky位置*/
+  z-index: 1;
+}
+
+.mat-column-PartNumber
+{
+  min-width: 180px;
+  background-color: darkgray;
+  position: sticky !important;/*手動固定*/
+  left: 200px !important;/*控制sticky位置*/
+  z-index: 1;
+}
+
+.mat-column-select_BufferArea
+{
+  background-color: darkgray;
+  position: sticky !important; /*手動固定*/
+  left: 380px !important; /*控制sticky位置*/
+  z-index: 1;
+}
+
+.make-lightblue {
+  background-color: lightblue;
+}
+
+.make-green {
+  background-color: green;
+}
+
+.blink {
+  animation-duration: 0.5s;
+  animation-name: blink;
+  animation-iteration-count: infinite;
+}
+
+@keyframes blink {
+  0% {
+    color: blue;
+  }
+
+  50% {
+    color: red;
+  }
+}
+
+.my-modal-header {
+  padding-top: 0px;
+  padding-bottom: 0px;
+}

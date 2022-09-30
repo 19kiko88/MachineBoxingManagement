@@ -1,0 +1,17 @@
+.blink {
+  animation-duration: 0.5s;
+  animation-name: blink;
+  animation-iteration-count: infinite;
+  font-size: 2em;
+  padding: 0.5em;
+}
+
+@keyframes blink {
+  0% {
+    color: blue;
+  }
+
+  50% {
+    color: red;
+  }
+}

@@ -1,0 +1,71 @@
+﻿{
+   "CodeGenerationMode": 1,
+   "ContextClassName": "CAEDB01Context",
+   "ContextNamespace": null,
+   "DefaultDacpacSchema": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": false,
+   "ModelNamespace": null,
+   "OutputContextPath": "Data",
+   "OutputPath": "Models",
+   "ProjectRootNamespace": "MachineBoxingManagement.Repositories",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 0,
+   "SelectedToBeGenerated": 0,
+   "Tables": [
+      {
+         "Name": "MachineStockManagement.BoxingStatus",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.BoxingOption",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.OaSpec",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.MachineConfirmHistory",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.BoxingSeriesRule",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.BoxingLocation",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.BoxingStageRule",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.MachineBoxingInfo",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.BoxingStyle",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": ".CAEDB01",
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDbContextSplitting": false,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoConstructor": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UseSchemaFolders": false,
+   "UseSpatial": false
+}

@@ -1,0 +1,84 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+
+
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>P/N：</label>
+      <input formControlName="txt_pn" type="text" class="form-control">
+    </div>
+  </div>
+
+
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label for="inputEmail4">Model：</label>
+      <input formControlName="txt_model" type="text" class="form-control">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>庫房：</label>
+      <div class="form-check" *ngFor="let location of locations">
+        <input class="form-check-input" type="checkbox" value={{location.id}} (change)="onCheckBoxChange($event, 'locationArray')" [checked]="location.checked">
+        <label class="form-check-label">
+          {{location.name}}
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group col-md-4">
+      <label>機台選項：</label>
+      <div class="form-check" *ngFor="let option of options">
+        <input class="form-check-input" type="checkbox" value={{option.id}} (change)="onCheckBoxChange($event, 'optionArray')" [checked]="option.checked">
+        <label class="form-check-label">
+          {{option.name}}
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group col-md-4">
+      <label>樣式選項：</label>
+      <div class="form-check" *ngFor="let style of style">
+        <input class="form-check-input" type="checkbox" value={{style.id}} (change)="onCheckBoxChange($event, 'styleArray')"  [checked]="style.checked">
+        <label class="form-check-label">
+          {{style.name}}
+        </label>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label>機台狀態：</label>
+      <div class="form-check" *ngFor="let status of statuses">
+        <input class="form-check-input" type="checkbox" value={{status.id}} (change)="onCheckBoxChange($event, 'statusArray')" [checked]="status.checked" >
+        <label class="form-check-label">
+          {{status.name}}
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group col-4 col-md-4" style="align-items:end; display:inline-flex">
+      <div class="form-check" style="text-align:center;">
+        <input formControlName ="chk_buffer_area" type="checkbox" />
+        <label>暫存區</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-4 col-md-4 ">
+      <button type="submit" class="btn btn-primary">查詢資料</button>
+    </div>
+
+    <div class="form-group col-4 col-md-4 ">
+      <button type="button" class="btn btn-primary" (click)="queryFavorites();">查詢暫存</button>
+    </div>
+  </div>
+
+</form>
+
+<app-loader [loader]="isLoading"></app-loader>
