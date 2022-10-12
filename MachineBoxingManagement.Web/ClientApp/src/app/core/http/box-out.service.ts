@@ -7,6 +7,7 @@ import { IResultDto } from '../../shared/models/dto/result-dto';
 import { tap, map } from 'rxjs/operators';
 import { boxOutItem } from '../../shared/models/dto/request/box-out';
 import { LocalStorageService } from '../services/local-storage.service';
+import { boxOutQueryCondition } from '../../shared/models/dto/request/box-out-query-condition';
 
 @Injectable({
   providedIn: 'root'
@@ -22,34 +23,41 @@ export class BoxOutService extends BaseService {
   }
 
   //取出維護-查詢
-  queryMachines(partNumber: string, model: string, location: number[], option: number[], style: number[], status: number[], bufferArea: boolean, favorites: number[]): Observable<IResultDto<PartNumber_Model_Desc[]>>
+  queryMachines(data: boxOutQueryCondition, favorites: number[]): Observable<IResultDto<PartNumber_Model_Desc[]>>
   {
     let paraLocation = "";
     let paraOption = "";
     let paraStyle = "";
     let paraStatus = "";
+    let paraBufferAreas = "";
 
-    if (location.length > 0) {
-      for (var i = 0; i < location.length; i++) {
-        paraLocation += `&locations=${location[i]}`;
+    if (data.locations.length > 0) {
+      for (var i = 0; i < data.locations.length; i++) {
+        paraLocation += `&locations=${data.locations[i]}`;
       }
     }
 
-    if (option.length > 0) {
-      for (var i = 0; i < option.length; i++) {
-        paraOption += `&options=${option[i]}`;
+    if (data.options.length > 0) {
+      for (var i = 0; i < data.options.length; i++) {
+        paraOption += `&options=${data.options[i]}`;
       }
     }
 
-    if (style.length > 0) {
-      for (var i = 0; i < style.length; i++) {
-        paraStyle += `&styles=${style[i]}`;
+    if (data.styles.length > 0) {
+      for (var i = 0; i < data.styles.length; i++) {
+        paraStyle += `&styles=${data.styles[i]}`;
       }
     }
 
-    if (status.length > 0) {
-      for (var i = 0; i < status.length; i++) {
-        paraStatus += `&statuses=${status[i]}`;
+    if (data.statuses.length > 0) {
+      for (var i = 0; i < data.statuses.length; i++) {
+        paraStatus += `&statuses=${data.statuses[i]}`;
+      }
+    }
+
+    if (data.buffer_areas.length > 0) {
+      for (var i = 0; i < data.buffer_areas.length; i++) {
+        paraBufferAreas += `&buffer_area=${data.buffer_areas[i]}`;
       }
     }
 
@@ -59,7 +67,9 @@ export class BoxOutService extends BaseService {
       }
     }
 
-    const url = `/BoxOut/QueryMachines?pn=${partNumber}&model=${model}${paraLocation}${paraOption}${paraStyle}${paraStatus}&buffer_area=${bufferArea}`;
+    let conditionDate: string = `&s_takeInDt=${data.take_in_dt_s}&e_takeInDt=${data.take_in_dt_e}&s_takeOutDt=${data.take_out_dt_s}&e_takeOutDt=${data.take_out_dt_e}`;
+
+    const url = `/BoxOut/QueryMachines?pn=${data.pn}&model=${data.model}${conditionDate}${paraLocation}${paraOption}${paraStyle}${paraStatus}${paraBufferAreas}`;
     const options = this.generatePostOptions();
 
     return this.httpClient

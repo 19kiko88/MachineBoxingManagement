@@ -70,25 +70,10 @@ namespace MachineBoxingManagement.Web.Services.Implements
         /// <param name="statuses"></param>
         /// <param name="bufferArea"></param>
         /// <returns></returns>
-        public async Task<Tuple<List<PartNumber_Model_Desc>, string>> QueryMachines(string partNumber, string model, int[] locations, int[] options, int[] styles, int[] statuses, int[]? favorites, bool bufferArea)
+        public async Task<Tuple<List<PartNumber_Model_Desc>, string>> QueryMachines(QueryRule conditions, int[]? favorites)
         {
             var Res = new List<PartNumber_Model_Desc>();
-            QueryRule Rule = new QueryRule
-            {
-                PartNumber = partNumber,
-                Model = model,
-                LocationIds = new List<int>(),
-                OptionIds = new List<int>(),
-                StyleIds = new List<int>(),
-                BufferAreas = new List<bool> { bufferArea }
-            };
-
-            Rule.LocationIds = locations?.ToList();
-            Rule.OptionIds = options?.ToList();
-            Rule.StyleIds = styles?.ToList();
-            Rule.Statuses = statuses?.ToList();
-
-            var ResWcf = _winformBoxoutService.QueryMachines(Rule, out var errorMsg);
+            var ResWcf = _winformBoxoutService.QueryMachines(conditions, out var errorMsg);
             var StatusMappingTable = _context.BoxingStatus.ToList();
             foreach (var item in ResWcf)
             {

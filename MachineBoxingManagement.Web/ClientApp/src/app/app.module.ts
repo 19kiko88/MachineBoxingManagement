@@ -22,6 +22,8 @@ import { TakeOutModalComponent } from './home/pages/take-out-modal/take-out-moda
 import { MatIconModule } from '@angular/material/icon';
 import { FavoriteButtonModule } from './shared/favorite-button/favorite-button.module';
 import { TempDataModalComponent } from './home/pages/temp-data-modal/temp-data-modal.component';
+import { NgbdDatepickerRangePopup } from './shared/datepicker-range/datepicker-range.component';
+import { NgbdDatepickerPopup } from './shared/datepicker/datepicker.component';
 
 @NgModule({
   declarations: [
@@ -34,7 +36,9 @@ import { TempDataModalComponent } from './home/pages/temp-data-modal/temp-data-m
     MainComponent,
     TempListModalComponent,
     TakeOutModalComponent,
-    TempDataModalComponent
+    TempDataModalComponent,
+    NgbdDatepickerRangePopup,
+    NgbdDatepickerPopup
   ],
   imports: [
     BrowserModule/*.withServerTransition({ appId: 'ng-cli-universal' })*/,

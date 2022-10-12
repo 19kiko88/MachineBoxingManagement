@@ -31,20 +31,41 @@ namespace MachineBoxingManagement.Web.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public async Task<Result<List<PartNumber_Model_Desc>>> QueryMachines(string? pn, string? model,
+        public async Task<Result<List<PartNumber_Model_Desc>>> QueryMachines(
+            string? pn, string? model, string? s_takeInDt, string? e_takeInDt, string? s_takeOutDt, string? e_takeOutDt,
             [FromQuery(Name = "locations")] int[]? locations,
             [FromQuery(Name = "options")] int[]? options,
             [FromQuery(Name = "styles")] int[]? styles,
             [FromQuery(Name = "statuses")] int[]? statuses,
             [FromQuery(Name = "favorites")] int[]? favorites,
-            bool buffer_area            
+            [FromQuery(Name = "buffer_area")] int[]? buffer_area
             )
         {
             var errorMsg = string.Empty;
             var result = new Result<List<PartNumber_Model_Desc>>() { Success = false };
+            DateTime sd = Convert.ToDateTime("0001/01/01 00:00:00");
+            DateTime ed = Convert.ToDateTime("9999/12/31 23:59:59");
+
             try
             {
-                var TupleRes = await _boxOutService.QueryMachines(pn, model, locations, options, styles, statuses, favorites, buffer_area);
+                var buffer_areaCount = 0;
+                buffer_area?.ToList().ForEach(c => buffer_areaCount += c);
+
+                var conditions = new MachineBoxingManagement.Services.Models.QueryRule()
+                {
+                    PartNumber = pn,
+                    Model = model,
+                    Sd_BoxIn = s_takeInDt,
+                    Ed_BoxIn = e_takeInDt,
+                    Sd_BoxOut = s_takeOutDt,
+                    Ed_BoxOut = e_takeOutDt,
+                    LocationIds = locations.ToList(),
+                    OptionIds = options.ToList(),
+                    StyleIds = styles.ToList(),
+                    Statuses = statuses.ToList(),
+                    BufferAreas = buffer_areaCount//轉換暫存區查詢條件：0 =>全部選, 1 => 非暫存區, 2=>暫存區, 3=>全選
+                };
+                var TupleRes = await _boxOutService.QueryMachines(conditions, favorites);
                 result.Content = TupleRes.Item1;
 
 

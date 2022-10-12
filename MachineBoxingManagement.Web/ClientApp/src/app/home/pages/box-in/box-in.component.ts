@@ -256,9 +256,9 @@ export class BoxInComponent implements OnInit, OnChanges {
   //重新設定Input欄位為預設值      
   ResetMachineInfo(): void {
     this.pn_desc = "";
-    this.boxInForm.controls["sel_location"].setValue("1");
+    //this.boxInForm.controls["sel_location"].setValue("1");
     //this.boxInForm.controls["sel_option"].setValue("1");
-    this.boxInForm.controls["sel_style"].setValue("1");
+    //this.boxInForm.controls["sel_style"].setValue("1");
     this.boxInForm.controls["txt_pn"].setValue("");
     this.boxInForm.controls["txt_ssn"].setValue("");
     this.boxInForm.controls["txt_model"].setValue("");
@@ -314,10 +314,10 @@ export class BoxInComponent implements OnInit, OnChanges {
 
     if (this.boxInForm.controls["txt_pn"].value)
     {
-      if (this.getPnDataList().length >= 100) {
-        this._swlService.showSwal("", "暫存資料已達100筆，請先批次儲存.", "warning");
-        return;
-      }
+      //if (this.getPnDataList().length >= 100) {
+      //  this._swlService.showSwal("", "暫存資料已達100筆，請先批次儲存.", "warning");
+      //  return;
+      //}
 
       if (!this.temp_save)
       {//沒有勾選立即暫存

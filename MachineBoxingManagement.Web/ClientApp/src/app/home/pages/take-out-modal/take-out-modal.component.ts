@@ -14,6 +14,7 @@ import { boxOutItem } from '../../../shared/models/dto/request/box-out';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { IResultDto } from '../../../shared/models/dto/result-dto';
 import { observable, throwError } from 'rxjs';
+import { boxOutQueryCondition } from '../../../shared/models/dto/request/box-out-query-condition';
 
 
 
@@ -143,7 +144,7 @@ export class TakeOutModalComponent implements OnInit {
         //取得要取出的機台ID
         let resTotal: string = "";
         let arrayId: number[] = [];
-        let selection = this.selection.selected;
+        let selection = this.selection.selected.filter(c => c.status_Id == 666);//篩選666，避免重複取出
         if (selection.length > 0) {
           for (var i = 0; i < selection.length; i++) {
             arrayId.push(selection[i].id);
@@ -222,8 +223,8 @@ export class TakeOutModalComponent implements OnInit {
   {
     this.isLoading = true;
 
-    let condition = JSON.parse(this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_data_condition));
-    this._boxOutService.queryMachines(condition.pn, condition.model, condition.locations, condition.options, condition.styles, condition.statuses, condition.bufferArea, this._boxOutService.getFavoritesId())
+    let condition: boxOutQueryCondition = JSON.parse(this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_data_condition));
+    this._boxOutService.queryMachines(condition, this._boxOutService.getFavoritesId())
       .subscribe(
         (res) => {
           if (res.message) {

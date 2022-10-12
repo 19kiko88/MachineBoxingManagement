@@ -7,7 +7,7 @@
     <div id="temp-table" class="table-responsive">
       <table mat-table #table [dataSource]="dataSource" class="table table-hover">
 
-        <ng-container matColumnDef="Favorite">
+        <ng-container matColumnDef="Favorite" [sticky]="true">
           <th mat-header-cell *matHeaderCellDef>
             暫存
             <mat-checkbox (change)="$event ? masterToggle_Favorite() : null"
@@ -28,13 +28,13 @@
 
 
         <!-- Serial No Column -->
-        <ng-container matColumnDef="SerialNo">
+        <ng-container matColumnDef="SerialNo" [sticky]="true">
           <th mat-header-cell *matHeaderCellDef> # </th>
           <td mat-cell *matCellDef="let element; let i = index;"> {{i+1}} </td>
         </ng-container>
 
         <!-- Checkbox Column -->
-        <ng-container matColumnDef="select">
+        <ng-container matColumnDef="select" [sticky]="true">
           <th mat-header-cell *matHeaderCellDef>
             取出?
             <mat-checkbox (change)="$event ? masterToggle() : null"
@@ -57,12 +57,12 @@
           </td>
         </ng-container>
 
-        <ng-container matColumnDef="PartNumber">
+        <ng-container matColumnDef="PartNumber" [sticky]="true">
           <th mat-header-cell *matHeaderCellDef> 料號 </th>
           <td mat-cell *matCellDef="let element"> {{element.part_Number}} </td>
         </ng-container>
 
-        <ng-container matColumnDef="select_BufferArea">
+        <ng-container matColumnDef="select_BufferArea" [sticky]="true">
           <th mat-header-cell *matHeaderCellDef>
             暫存區
           </th>
@@ -148,9 +148,9 @@
         </ng-container>
 
         <!--<ng-container matColumnDef="SSN">
-    <th mat-header-cell *matHeaderCellDef> SSN </th>
-    <td mat-cell *matCellDef="let element"> {{element.ssn}} </td>
-  </ng-container>-->
+          <th mat-header-cell *matHeaderCellDef> SSN </th>
+          <td mat-cell *matCellDef="let element"> {{element.ssn}} </td>
+        </ng-container>-->
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
 
@@ -174,7 +174,6 @@
 </div>
 
 <app-loader [loader]="isLoading"></app-loader>
-
 
 
 

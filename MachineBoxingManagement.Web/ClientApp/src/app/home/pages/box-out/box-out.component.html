@@ -12,8 +12,35 @@
 
   <div class="form-row">
     <div class="form-group col-md-4">
-      <label for="inputEmail4">Model：</label>
+      <label>Model：</label>
       <input formControlName="txt_model" type="text" class="form-control">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-md-3">
+      <label>入庫日期(起)：</label>
+      <app-datepicker-popup #txt_sd_boxin></app-datepicker-popup>
+    </div>
+
+
+    <div class="form-group col-md-3">
+      <label>入庫日期(訖)：</label>
+      <app-datepicker-popup #txt_ed_boxin
+                            [setToday]=true></app-datepicker-popup>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-md-3">
+      <label>取出日期(起)：</label>
+      <app-datepicker-popup #txt_sd_boxout></app-datepicker-popup>
+    </div>
+
+
+    <div class="form-group col-md-3">
+      <label>取出日期(訖)：</label>
+      <app-datepicker-popup #txt_ed_boxout></app-datepicker-popup>
     </div>
   </div>
 
@@ -21,7 +48,7 @@
     <div class="form-group col-md-4">
       <label>庫房：</label>
       <div class="form-check" *ngFor="let location of locations">
-        <input class="form-check-input" type="checkbox" value={{location.id}} (change)="onCheckBoxChange($event, 'locationArray')" [checked]="location.checked">
+        <input class="form-check-input" type="checkbox" value={{location.id}} (change)="onCheckBoxChange($event, 'ckb_list_location')" [checked]="location.checked">
         <label class="form-check-label">
           {{location.name}}
         </label>
@@ -31,7 +58,7 @@
     <div class="form-group col-md-4">
       <label>機台選項：</label>
       <div class="form-check" *ngFor="let option of options">
-        <input class="form-check-input" type="checkbox" value={{option.id}} (change)="onCheckBoxChange($event, 'optionArray')" [checked]="option.checked">
+        <input class="form-check-input" type="checkbox" value={{option.id}} (change)="onCheckBoxChange($event, 'ckb_list_option')" [checked]="option.checked">
         <label class="form-check-label">
           {{option.name}}
         </label>
@@ -40,8 +67,8 @@
 
     <div class="form-group col-md-4">
       <label>樣式選項：</label>
-      <div class="form-check" *ngFor="let style of style">
-        <input class="form-check-input" type="checkbox" value={{style.id}} (change)="onCheckBoxChange($event, 'styleArray')"  [checked]="style.checked">
+      <div class="form-check" *ngFor="let style of styles">
+        <input class="form-check-input" type="checkbox" value={{style.id}} (change)="onCheckBoxChange($event, 'ckb_list_style')"  [checked]="style.checked">
         <label class="form-check-label">
           {{style.name}}
         </label>
@@ -54,17 +81,20 @@
     <div class="form-group col-md-4">
       <label>機台狀態：</label>
       <div class="form-check" *ngFor="let status of statuses">
-        <input class="form-check-input" type="checkbox" value={{status.id}} (change)="onCheckBoxChange($event, 'statusArray')" [checked]="status.checked" >
+        <input class="form-check-input" type="checkbox" value={{status.id}} (change)="onCheckBoxChange($event, 'ckb_list_status')" [checked]="status.checked" >
         <label class="form-check-label">
           {{status.name}}
         </label>
       </div>
     </div>
 
-    <div class="form-group col-4 col-md-4" style="align-items:end; display:inline-flex">
-      <div class="form-check" style="text-align:center;">
-        <input formControlName ="chk_buffer_area" type="checkbox" />
-        <label>暫存區</label>
+    <div class="form-group col-md-4">
+      <label>暫存區狀態：</label>
+      <div class="form-check" *ngFor="let buffer_area of bufferAreas">
+        <input class="form-check-input" type="checkbox" value={{buffer_area.id}} (change)="onCheckBoxChange($event, 'ckb_list_bufferArea')" [checked]="buffer_area.checked">
+        <label class="form-check-label">
+          {{buffer_area.name}}
+        </label>
       </div>
     </div>
   </div>

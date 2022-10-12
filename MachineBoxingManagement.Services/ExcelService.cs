@@ -77,6 +77,8 @@ namespace MachineBoxingManagement.Services
                 xlRanges.Add("海運待燒OA", workbook.Worksheet("海運待燒").Range("A1", "F29"));
                 xlRanges.Add("ORT", workbook.Worksheet("ORT").Range("A1", "E29"));
                 xlRanges.Add("永久保留", workbook.Worksheet("永久保留").Range("A1", "E29"));
+                xlRanges.Add("Fail拆解機台", workbook.Worksheet("Fail拆解機台").Range("A1", "E29"));
+                xlRanges.Add("其他機台", workbook.Worksheet("其他機台").Range("A1", "E29"));
 
 
                 var allLocations = _caEDB01Context.BoxingLocation.Select(a => a).ToList();

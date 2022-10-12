@@ -1,6 +1,6 @@
-import { Component, OnInit, Input, OnChanges, HostListener } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, HostListener, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbDatepicker, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { BoxOutService } from '../../../core/http/box-out.service';
 import { CommonService } from '../../../core/http/common.service';
@@ -9,8 +9,9 @@ import { SoundPlayService } from '../../../core/services/sound-play.service';
 import { SweetalertService } from '../../../core/services/sweetalert.service';
 import { ITakeOutPostMessageDto } from '../../../shared/models/dto/takeout-postmessage-dto';
 import { CheckBoxList } from '../../../shared/models/dto/response/check-box-list';
-import { Enum_Sound } from '../../../shared/models/enum/sound';
 import { TempDataModalComponent } from '../temp-data-modal/temp-data-modal.component';
+import { NgbdDatepickerPopup } from '../../../shared/datepicker/datepicker.component';
+import { boxOutQueryCondition } from '../../../shared/models/dto/request/box-out-query-condition';
 
 @Component({
   selector: 'app-box-out',
@@ -19,12 +20,17 @@ import { TempDataModalComponent } from '../temp-data-modal/temp-data-modal.compo
 })
 export class BoxOutComponent implements OnInit, OnChanges {
   @Input() activeNo: string;
-  @Input() inputUserName: string; 
+  @Input() inputUserName: string;
+  @ViewChild("txt_sd_boxin") sdBoxIn: NgbdDatepickerPopup;
+  @ViewChild("txt_ed_boxin") edBoxIn: NgbdDatepickerPopup;
+  @ViewChild("txt_sd_boxout") sdBoxOut: NgbdDatepickerPopup;
+  @ViewChild("txt_ed_boxout") edBoxOut: NgbdDatepickerPopup;
 
   locations: CheckBoxList[] = [];
   options: CheckBoxList[] = [];
-  style: CheckBoxList[] = [];
+  styles: CheckBoxList[] = [];
   statuses: CheckBoxList[] = [];
+  bufferAreas: CheckBoxList[] = [];
   form: FormGroup;
   isLoading: boolean = false;
   Swal = Swal;
@@ -33,6 +39,7 @@ export class BoxOutComponent implements OnInit, OnChanges {
   ls_key_take_out_modal_data_condition: string = "takeOutModalQueryCondition";
   ls_key_list_data: string = "temp_list_data";
   currentUserName: string = "";
+  setToday: boolean = true;
 
   constructor(
     private _modalService: NgbModal,
@@ -46,11 +53,11 @@ export class BoxOutComponent implements OnInit, OnChanges {
     this.form = this.fb.group({
       txt_pn: new FormControl(""),//90NB0S51-T00070, 90NB0TE3-E00040
       txt_model: new FormControl(""),//UX482EG
-      locationArray: this.fb.array([]),
-      optionArray: this.fb.array([]),
-      styleArray: this.fb.array([]),
-      statusArray: this.fb.array([]),
-      chk_buffer_area: new FormControl(true),
+      ckb_list_location: this.fb.array([]),
+      ckb_list_option: this.fb.array([]),
+      ckb_list_style: this.fb.array([]),
+      ckb_list_status: this.fb.array([]),
+      ckb_list_bufferArea: this.fb.array([])
     })
   }
 
@@ -63,19 +70,25 @@ export class BoxOutComponent implements OnInit, OnChanges {
     {
       this.locations = await this._commonService.getBoxingLocations().toPromise();
       this.options = await this._commonService.getBoxingOptions().toPromise();
-      this.style = await this._commonService.getBoxingStyle().toPromise();
+      this.styles = await this._commonService.getBoxingStyle().toPromise();
       this.statuses = await this._commonService.getBoxingStatus().toPromise();
+      this.bufferAreas = [{ id: 1, name: "非暫存區", checked: true }, { id: 2, name: "暫存區", checked: true }]
 
-      let arrayControlName: string[] = ["locationArray", "optionArray", "styleArray", "statusArray"];
-      let arrayCheckBoxs: CheckBoxList[][] = [this.locations, this.options, this.style, this.statuses];
+      let arrayControlName: string[] = ["ckb_list_location", "ckb_list_option", "ckb_list_style", "ckb_list_status", "ckb_list_bufferArea"];
+      let arrayConditionPropertyName: string[] = ["locations", "options", "styles", "statuses", "buffer_areas"];
+      let arrayCheckBoxs: CheckBoxList[][] = [this.locations, this.options, this.styles, this.statuses, this.bufferAreas];
 
       if (this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_data_condition) != "undefined")
       {
-        let condition = JSON.parse(this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_data_condition));
+        let condition: boxOutQueryCondition = JSON.parse(this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_data_condition));
 
+        //設定初始值
         this.form.controls["txt_pn"].setValue(condition.pn);
         this.form.controls["txt_model"].setValue(condition.model);
-        this.form.controls["chk_buffer_area"].setValue(condition.bufferArea);
+        this.sdBoxIn.model = condition.take_in_dt_s ? this.ngbDatePaser(condition.take_in_dt_s) : undefined;
+        this.edBoxIn.model = condition.take_in_dt_e ? this.ngbDatePaser(condition.take_in_dt_e) : undefined;
+        this.sdBoxOut.model = condition.take_out_dt_s ? this.ngbDatePaser(condition.take_out_dt_s) : undefined;
+        this.edBoxOut.model = condition.take_out_dt_e ? this.ngbDatePaser(condition.take_out_dt_e) : undefined;
 
         for (var i = 0; i < arrayControlName.length; i++)
         {
@@ -85,52 +98,19 @@ export class BoxOutComponent implements OnInit, OnChanges {
             {
               arrayCheckBoxs[i][j].checked = false;
 
-              switch (arrayControlName[i])
-              {//checkbox是否打勾設定
-                case "locationArray":
-                  for (var k = 0; k < condition.locations.length; k++)
-                  {
-                    if (arrayCheckBoxs[i][j].id == condition.locations[k])
-                    {
-                      arrayCheckBoxs[i][j].checked = true;
-                      arrayData.push(new FormControl(arrayCheckBoxs[i][j].id));//更新FormControl
-                    }
-                  }
-                  break;
-                case "optionArray":
-                  for (var k = 0; k < condition.options.length; k++)
-                  {
-                    if (arrayCheckBoxs[i][j].id == condition.options[k])
-                    {
-                      arrayCheckBoxs[i][j].checked = true;
-                      arrayData.push(new FormControl(arrayCheckBoxs[i][j].id));//更新FormControl
-                    }
-                  }
-                  break;
-                case "styleArray":
-                  for (var k = 0; k < condition.styles.length; k++) {
-                    if (arrayCheckBoxs[i][j].id == condition.styles[k])
-                    {
-                      arrayCheckBoxs[i][j].checked = true;
-                      arrayData.push(new FormControl(arrayCheckBoxs[i][j].id));//更新FormControl
-                    }
-                  }
-                  break;
-                case "statusArray":
-                  for (var k = 0; k < condition.statuses.length; k++) {
-                    if (arrayCheckBoxs[i][j].id == condition.statuses[k])
-                    {
-                      arrayCheckBoxs[i][j].checked = true;
-                      arrayData.push(new FormControl(arrayCheckBoxs[i][j].id));//更新FormControl
-                    }
-                  }
-                  break;
+              //從condition物件取得查詢條件內容
+              let arrayConditionProperty: number[] = condition[arrayConditionPropertyName[i].toString()];
+
+              for (var k = 0; k < arrayConditionProperty.length; k++)
+              {
+                if (arrayCheckBoxs[i][j].id == arrayConditionProperty[k])
+                {
+                  arrayCheckBoxs[i][j].checked = true;
+                  arrayData.push(new FormControl(arrayCheckBoxs[i][j].id));//更新FormControl
+                }
               }
             }
         }
-
-
-
       }
       else
       {//預設checkbox為全部勾選設定
@@ -142,7 +122,8 @@ export class BoxOutComponent implements OnInit, OnChanges {
           }
         }
       }
-    } catch (e)
+    }
+    catch (e)
     {
       this.Swal.fire({
         icon: "error",
@@ -152,14 +133,6 @@ export class BoxOutComponent implements OnInit, OnChanges {
         allowEscapeKey: false//ESC關閉confirm
       })
     }
-
-    /*主畫面關閉要通知彈跳視窗關閉*/
-    let passData: ITakeOutPostMessageDto = {
-      isParentClose: true
-    }
-    window.addEventListener("beforeunload", (event) => {
-      this.previewWindow.postMessage(passData, `${window.location.origin}/take_out_list`)
-    }, false);
 
     //切換分頁後，this.previewWindow會變成undefinded。如果已經有開啟modal，就要再重新open一次取得previewWindow
     if (this.isTakeOutModalOpen() == "1")
@@ -177,9 +150,24 @@ export class BoxOutComponent implements OnInit, OnChanges {
   {
     if (this.inputUserName != this.currentUserName)
     {//@Input的inputUserName變更要重新onSubmit()，重新開啟機台取出視窗，取得最新的UserName
+
       if (this.currentUserName && this.isTakeOutModalOpen() == "1")
       {
-        this.onSubmit(false);
+        let validateMsg = this.formValidate();
+        if (validateMsg.length > 0)
+        {
+          /*主畫面關閉要通知彈跳視窗關閉*/
+          let passData: ITakeOutPostMessageDto = {
+            isParentClose: true
+          }         
+          this.previewWindow.postMessage(passData, `${window.location.origin}/take_out_list`)
+
+          this._swlService.showSwal("", validateMsg, "warning");
+        }
+        else
+        {
+          this.onSubmit();
+        }
       }
 
       this.currentUserName = this.inputUserName;
@@ -210,31 +198,37 @@ export class BoxOutComponent implements OnInit, OnChanges {
   }
 
   //送出查詢
-  onSubmit(showConditionAlert: boolean = true)
+  onSubmit()
   {
     this.isLoading = true;
-    let pn = this.form.controls["txt_pn"].value;
-    let model = this.form.controls["txt_model"].value;
-    let locations = this.form.get('locationArray').value;
-    let options = this.form.get('optionArray').value;
-    let styles = this.form.get('styleArray').value;
-    let statuses = this.form.get('statusArray').value;
-    let bufferArea = this.form.controls["chk_buffer_area"].value;
+    let validateMsg = this.formValidate();//取得檢核結果
 
-    if (!pn && !model)
+    if (validateMsg.length > 0)
     {
-      if (showConditionAlert)
-      {
-        this._swlService.showSwal("", "請先輸入查詢條件<br>P/N與Model必須擇一填寫.", "warning");
-      }
-
-      this.isLoading = false;
-      return;
+      this._swlService.showSwal("", validateMsg, "warning");
+      this.isLoading = false;      
     }
+    else
+    {
+      let querycondition: boxOutQueryCondition =
+      {
+        pn: this.form.controls["txt_pn"].value,
+        model: this.form.controls["txt_model"].value,
+        take_in_dt_s: this.dateParser(this.sdBoxIn),
+        take_in_dt_e: this.dateParser(this.edBoxIn),
+        take_out_dt_s: this.dateParser(this.sdBoxOut),
+        take_out_dt_e: this.dateParser(this.edBoxOut),
+        locations: this.form.get('ckb_list_location').value,
+        options: this.form.get('ckb_list_option').value,
+        styles: this.form.get('ckb_list_style').value,
+        statuses: this.form.get('ckb_list_status').value,
+        buffer_areas: this.form.get('ckb_list_bufferArea').value
+      };
 
-    this.openWindow();
-    let querycondition = { pn: pn, model: model, locations: locations, options: options, styles: styles, statuses: statuses, bufferArea: bufferArea };
-    this._localStorageService.setLocalStorageData(this.ls_key_take_out_modal_data_condition, querycondition);
+      this._localStorageService.setLocalStorageData(this.ls_key_take_out_modal_data_condition, querycondition);
+
+      this.openWindow();
+    }
   }
 
   //查看暫存資料
@@ -268,7 +262,6 @@ export class BoxOutComponent implements OnInit, OnChanges {
 
   }
 
-
   isTakeOutModalOpen(): string {
     return this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_open);
   }
@@ -282,11 +275,7 @@ export class BoxOutComponent implements OnInit, OnChanges {
     this._localStorageService.setLocalStorageData(this.ls_key_take_out_modal_open, 1)
   }
 
-
-  /**
- * 接收機台清單彈跳視窗回傳是否查詢完畢訊號，解除isLoading遮罩
- * @param event
- */
+  //接收機台清單彈跳視窗回傳是否查詢完畢訊號，解除isLoading遮罩
   @HostListener('window:message', ['$event'])
   onMessage(event: MessageEvent): void
   {
@@ -299,5 +288,59 @@ export class BoxOutComponent implements OnInit, OnChanges {
     //{
     //  this.queryFavorites();
     //}    
+  }
+
+  //轉換日期格視為yyyy/MM/dd字串
+  dateParser(data: NgbdDatepickerPopup): string
+  {
+    let res: string = "";
+    if (data && data.model)
+    {
+      let d = new Date(`${data.model.year}/${data.model.month}/${data.model.day}`);
+      if (d.toDateString() != "Invalid Date")
+      {
+        res = `${data.model.year}/${data.model.month.toString().padStart(2, '0')}/${data.model.day.toString().padStart(2, '0')}`;
+      }
+      else
+      {
+        res = "Invalid Date";
+      }
+    }
+    return res;
+  }
+
+  ngbDatePaser(d: string): NgbDate
+  {
+    return new NgbDate(Number(d.substring(0, 4)), Number(d.substring(5, 7)), Number(d.substring(9, 10)));
+  }
+
+  //輸入查詢條件檢核
+  formValidate(): string
+  {
+    let pn = this.form.controls["txt_pn"].value;
+    let model = this.form.controls["txt_model"].value;
+    let takeInDateStart = this.dateParser(this.sdBoxIn);
+    let takeInDateEnd = this.dateParser(this.edBoxIn);
+    let takeOutDateStart = this.dateParser(this.sdBoxOut);
+    let takeOutDateEnd = this.dateParser(this.edBoxOut);
+
+    let msg: string = "";
+
+    if (!pn && !model) {
+      msg += "請先輸入查詢條件，P/N與Model必須擇一填寫.</br></br>";
+    }
+
+    let aryDateInfo: string[] = [takeInDateStart, takeInDateEnd, takeOutDateStart, takeOutDateEnd];
+    let aryDateInfoCN: string[] = ["入庫日期(起)", "入庫日期(迄)", "取出日期(起)", "取出日期(迄)"];
+
+    for (var i = 0; i < aryDateInfo.length; i++)
+    {
+      if (aryDateInfo[i] == "Invalid Date")
+      {
+        msg += `${aryDateInfoCN[i]}日期格式錯誤.<//br></br>`;
+      }
+    }
+
+    return msg;
   }
 }

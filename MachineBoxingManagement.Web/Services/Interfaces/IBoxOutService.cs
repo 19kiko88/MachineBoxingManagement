@@ -25,7 +25,7 @@ namespace MachineBoxingManagement.Web.Services.Interfaces
         /// <param name="styles"></param>
         /// <param name="errorMsg"></param>
         /// <returns></returns>
-        public Task<Tuple<List<PartNumber_Model_Desc>, string>> QueryMachines(string partNumber, string model, int[] locations, int[] options, int[] styles, int[] statuses, int[]? favorites, bool bufferArea);
+        public Task<Tuple<List<PartNumber_Model_Desc>, string>> QueryMachines(MachineBoxingManagement.Services.Models.QueryRule conditions, int[]? favorites);
 
         /// <summary>
         /// 取出維護[機台取出]

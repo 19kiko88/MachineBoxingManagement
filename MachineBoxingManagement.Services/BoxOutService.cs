@@ -99,75 +99,92 @@ namespace MachineBoxingManagement.Services
         {
             var result = new List<MachineBoxingInfoView>();
             errMsg = "";
-            var qresult = new List<MachineBoxingInfo>();
             try
             {
 
                 var allLocations = _caEDB01Context.BoxingLocation.Select(a => a).ToList();
-                //var allBoxingNames = _caEDB01Context.BoxingName.Select(a => a).ToList();
                 var allBoxingOptions = _caEDB01Context.BoxingOption.Select(a => a).ToList();
                 var allStatus = _caEDB01Context.BoxingStatus.Select(a => a).ToList();
                 var allStyleNames = _caEDB01Context.BoxingStyle.Select(a => a.Name).ToList();
 
+                IQueryable<MachineBoxingInfo> qresult = _caEDB01Context.MachineBoxingInfo.AsQueryable();
+
                 if (sources == null)
                 {
+                    if (!string.IsNullOrEmpty(rule.Sd_BoxOut) || !string.IsNullOrEmpty(rule.Ed_BoxOut))
+                    {//取出起或訖有填寫
+                        var Dt_Sd_BoxOut = DateTime.TryParse(rule.Sd_BoxOut, out var dt3) ? dt3 : Convert.ToDateTime($"0001/01/01 00:00:00");
+                        var Dt_Ed_BoxOut = DateTime.TryParse(rule.Ed_BoxOut, out var dt4) ? dt4.AddDays(1).AddMilliseconds(-1000) : Convert.ToDateTime($"9999/12/31 23:59:59");
+
+                        qresult = qresult.Where(c => (c.TakeOutTime >= Dt_Sd_BoxOut && c.TakeOutTime <= Dt_Ed_BoxOut)).AsQueryable();
+                    }
+
                     if (!string.IsNullOrEmpty(rule.PartNumber))
                     {
-                        qresult = _caEDB01Context.MachineBoxingInfo.Where(a => a.PartNumber.ToUpper().StartsWith(rule.PartNumber.ToUpper())).ToList();
+                        qresult = qresult.Where(c => c.PartNumber.ToUpper().StartsWith(rule.PartNumber.ToUpper())).AsQueryable();
                     }
 
                     if (!string.IsNullOrEmpty(rule.Model))
                     {
-                        var pns = GetPartNumberFromModel(rule.Model);
-                        if (qresult.Count > 0)
+                        var pns = new List<string>();
+                        try
                         {
-                            qresult = qresult.Where(a => pns.Any(b => b.ToUpper() == a.PartNumber.ToUpper())).ToList();
+                            pns = GetPartNumberFromModel(rule.Model);
                         }
-                        else
+                        catch (Exception)
                         {
-                            qresult = _caEDB01Context.MachineBoxingInfo.Where(a => pns.Select(b => b.ToUpper()).ToList().Contains(a.PartNumber.ToUpper())).ToList();
+                            pns = new List<string>() { "Error" };
+                        }
+                        finally
+                        {
+                            qresult = qresult.Where(a => pns.Select(b => b.ToUpper()).ToList().Contains(a.PartNumber.ToUpper())).AsQueryable();
                         }
                     }
 
                     if (rule.LocationIds.Count > 0)
                     {
-                        qresult = qresult.Where(a => rule.LocationIds.Contains(a.BoxingLocationId)).ToList();
+                        qresult = qresult.Where(a => rule.LocationIds.Contains(a.BoxingLocationId)).AsQueryable();
                     }
 
                     if (rule.OptionIds.Count > 0)
                     {
-                        qresult = qresult.Where(a => rule.OptionIds.Contains(a.BoxingOptionId)).ToList();
+                        qresult = qresult.Where(a => rule.OptionIds.Contains(a.BoxingOptionId)).AsQueryable();
                     }
 
                     if (rule.StyleIds.Count > 0)
                     {
-                        qresult = qresult.Where(a => rule.StyleIds.Contains(a.BoxingStyleId)).ToList();
+                        qresult = qresult.Where(a => rule.StyleIds.Contains(a.BoxingStyleId)).AsQueryable();
                     }
 
                     if (rule.Statuses.Count > 0)
                     {
-                        qresult = qresult.Where(a => rule.Statuses.Contains(a.StatusId)).ToList();
+                        qresult = qresult.Where(a => rule.Statuses.Contains(a.StatusId)).AsQueryable();
                     }
 
-                    if (rule.BufferAreas.Count > 0)
-                    {
-                        qresult = qresult.Where(a => rule.BufferAreas.Contains(a.BufferArea)).ToList();
+                    switch (rule.BufferAreas)
+                    {//轉換暫存區查詢條件：0 =>全部選, 1 => 非暫存區, 2=>暫存區, 3=>全選
+                        case 1:
+                            qresult = qresult.Where(c => c.BufferArea == false).AsQueryable();
+                            break;
+                        case 2:
+                            qresult = qresult.Where(c => c.BufferArea == true).AsQueryable();
+                            break;
+                        default:
+                            break;
                     }
-
                 }
 
                 if (sources != null && sources.Count > 0)
                 {
-                    qresult = sources;
+                    qresult = sources.AsQueryable();
                 }
 
-                if (qresult.Count > 0)
+                var List_qresult = qresult.ToList();
+                if (List_qresult.Count > 0)
                 {
-                    //var allpninfo = _serviceClient.GetAllPNsInformation(qresult.Select(a => a.PartNumber).Distinct().ToArray(), "cae520");
+                    var allcdt = GetInstockTime(List_qresult.Select(a => a.PartNumber).Distinct().ToList(), out string cdtError);
 
-                    var allcdt = GetInstockTime(qresult.Select(a => a.PartNumber).Distinct().ToList(), out string cdtError);
-
-                    foreach (var r in qresult)
+                    foreach (var r in List_qresult)
                     {
                         result.Add(new MachineBoxingInfoView
                         {
@@ -191,6 +208,9 @@ namespace MachineBoxingManagement.Services
                         });
                     }
 
+                    var Dt_Sd_BoxIn = DateTime.TryParse(rule.Sd_BoxIn, out var dt1) ? dt1 : Convert.ToDateTime($"0001/01/01 00:00:00");
+                    var Dt_Ed_BoxIn = DateTime.TryParse(rule.Ed_BoxIn, out var dt2) ? dt2.AddDays(1).AddMilliseconds(-1000) : Convert.ToDateTime($"9999/12/31 23:59:59");
+                    result = result.Where(c => Convert.ToDateTime(c.OperationTime) >= Dt_Sd_BoxIn && Convert.ToDateTime(c.OperationTime) <= Dt_Ed_BoxIn).ToList();
                 }
 
             }
