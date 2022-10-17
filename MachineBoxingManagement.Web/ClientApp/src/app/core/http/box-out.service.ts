@@ -25,55 +25,13 @@ export class BoxOutService extends BaseService {
   //取出維護-查詢
   queryMachines(data: boxOutQueryCondition, favorites: number[]): Observable<IResultDto<PartNumber_Model_Desc[]>>
   {
-    let paraLocation = "";
-    let paraOption = "";
-    let paraStyle = "";
-    let paraStatus = "";
-    let paraBufferAreas = "";
-
-    if (data.locations.length > 0) {
-      for (var i = 0; i < data.locations.length; i++) {
-        paraLocation += `&locations=${data.locations[i]}`;
-      }
-    }
-
-    if (data.options.length > 0) {
-      for (var i = 0; i < data.options.length; i++) {
-        paraOption += `&options=${data.options[i]}`;
-      }
-    }
-
-    if (data.styles.length > 0) {
-      for (var i = 0; i < data.styles.length; i++) {
-        paraStyle += `&styles=${data.styles[i]}`;
-      }
-    }
-
-    if (data.statuses.length > 0) {
-      for (var i = 0; i < data.statuses.length; i++) {
-        paraStatus += `&statuses=${data.statuses[i]}`;
-      }
-    }
-
-    if (data.buffer_areas.length > 0) {
-      for (var i = 0; i < data.buffer_areas.length; i++) {
-        paraBufferAreas += `&buffer_area=${data.buffer_areas[i]}`;
-      }
-    }
-
-    if (favorites.length > 0) {
-      for (var i = 0; i < favorites.length; i++) {
-        paraStatus += `&favorites=${favorites[i]}`;
-      }
-    }
-
-    let conditionDate: string = `&s_takeInDt=${data.take_in_dt_s}&e_takeInDt=${data.take_in_dt_e}&s_takeOutDt=${data.take_out_dt_s}&e_takeOutDt=${data.take_out_dt_e}`;
-
-    const url = `/BoxOut/QueryMachines?pn=${data.pn}&model=${data.model}${conditionDate}${paraLocation}${paraOption}${paraStyle}${paraStatus}${paraBufferAreas}`;
+    const url = "/BoxOut/QueryMachines";
     const options = this.generatePostOptions();
 
+    data.favorites = favorites;
+
     return this.httpClient
-      .get<IResultDto<PartNumber_Model_Desc[]>>(url, options)
+      .post<IResultDto<PartNumber_Model_Desc[]>>(url, data, options)
       .pipe(
         tap(() => {
           this.log("execute api QueryMachines.");

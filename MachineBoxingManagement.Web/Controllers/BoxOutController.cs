@@ -30,16 +30,8 @@ namespace MachineBoxingManagement.Web.Controllers
         /// 取出維護-機台查詢
         /// </summary>
         /// <returns></returns>
-        [HttpGet]
-        public async Task<Result<List<PartNumber_Model_Desc>>> QueryMachines(
-            string? pn, string? model, string? s_takeInDt, string? e_takeInDt, string? s_takeOutDt, string? e_takeOutDt,
-            [FromQuery(Name = "locations")] int[]? locations,
-            [FromQuery(Name = "options")] int[]? options,
-            [FromQuery(Name = "styles")] int[]? styles,
-            [FromQuery(Name = "statuses")] int[]? statuses,
-            [FromQuery(Name = "favorites")] int[]? favorites,
-            [FromQuery(Name = "buffer_area")] int[]? buffer_area
-            )
+        [HttpPost]
+        public async Task<Result<List<PartNumber_Model_Desc>>> QueryMachines(Object_QueryMachines data)
         {
             var errorMsg = string.Empty;
             var result = new Result<List<PartNumber_Model_Desc>>() { Success = false };
@@ -49,23 +41,23 @@ namespace MachineBoxingManagement.Web.Controllers
             try
             {
                 var buffer_areaCount = 0;
-                buffer_area?.ToList().ForEach(c => buffer_areaCount += c);
+                data.buffer_areas?.ToList().ForEach(c => buffer_areaCount += c);
 
                 var conditions = new MachineBoxingManagement.Services.Models.QueryRule()
                 {
-                    PartNumber = pn,
-                    Model = model,
-                    Sd_BoxIn = s_takeInDt,
-                    Ed_BoxIn = e_takeInDt,
-                    Sd_BoxOut = s_takeOutDt,
-                    Ed_BoxOut = e_takeOutDt,
-                    LocationIds = locations.ToList(),
-                    OptionIds = options.ToList(),
-                    StyleIds = styles.ToList(),
-                    Statuses = statuses.ToList(),
+                    PartNumber = data.pn,
+                    Model = data.model,
+                    Sd_BoxIn = data.take_in_dt_s,
+                    Ed_BoxIn = data.take_in_dt_e,
+                    Sd_BoxOut = data.take_out_dt_s,
+                    Ed_BoxOut = data.take_out_dt_e,
+                    LocationIds = data.locations.ToList(),
+                    OptionIds = data.options.ToList(),
+                    StyleIds = data.styles.ToList(),
+                    Statuses = data.statuses.ToList(),
                     BufferAreas = buffer_areaCount//轉換暫存區查詢條件：0 =>全部選, 1 => 非暫存區, 2=>暫存區, 3=>全選
                 };
-                var TupleRes = await _boxOutService.QueryMachines(conditions, favorites);
+                var TupleRes = await _boxOutService.QueryMachines(conditions, data.favorites);
                 result.Content = TupleRes.Item1;
 
 

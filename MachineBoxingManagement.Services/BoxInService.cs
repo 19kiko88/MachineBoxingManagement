@@ -111,6 +111,14 @@ namespace MachineBoxingManagement.Services
                                 break;
                         }
                         break;
+                    case String a when a.StartsWith("Fail拆解機台"):
+                        if (boxstage == "MP")
+                        {
+                            boxstage = "PR";//MP歸類為PR_20221012 from Hank
+                        }
+                        var strInstockTime = instockTime.ToString("yyyy/M/dd");
+                        boxName = $"Fail-{boxstage}-{instockSession}";
+                        break;
                     default:
                         
                         break;

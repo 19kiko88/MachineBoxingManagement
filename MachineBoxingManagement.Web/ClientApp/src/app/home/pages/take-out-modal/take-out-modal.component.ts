@@ -40,6 +40,7 @@ export class TakeOutModalComponent implements OnInit {
   ls_key_take_out_modal_data_condition: string = "takeOutModalQueryCondition";
   passData: ITakeOutPostMessageDto = { inputUserName: "", inputData: null, isParentClose: false }
   refreshMain: boolean = false;
+  favorites: PartNumber_Model_Desc[] = this._localStorageService.getLocalStorageData("my_favorite") == "undefined" ? [] : JSON.parse(this._localStorageService.getLocalStorageData("my_favorite"));
 
   constructor(
     private _route: ActivatedRoute,
@@ -115,18 +116,33 @@ export class TakeOutModalComponent implements OnInit {
 
   /*[暫存全選] checkbox*/
   masterToggle_Favorite()
-  {
-    let isAllSelected$ = this.isAllSelected_Favorite();
+  {    
+    let isAllSelected$ = this.isAllSelected_Favorite();    
+
+    this.dataSource.data.forEach(item => {      
+      for (var i = 0; i < this.favorites.length; i++)
+      {
+        if (this.favorites[i].id == item.id)
+        {
+          this.favorites.splice(i, 1);
+          break;
+        }
+      }
+    });
+
     if (isAllSelected$)
     {//全部取消暫存
       this.selection_Favorite.clear();
-      this._localStorageService.setLocalStorageData("my_favorite", []);
     }
     else
     {//全部暫存
-      this.dataSource.data.forEach(row => this.selection_Favorite.select(row));
-      this._localStorageService.setLocalStorageData("my_favorite", this.inputTempDatas);
+      this.dataSource.data.forEach(item => {
+        this.favorites.push(item);
+        this.selection_Favorite.select(item);
+      });
     }
+
+    this._localStorageService.setLocalStorageData("my_favorite", this.favorites);
   }
 
   /*變更暫存區狀態 & 取出機台(先變更暫存區狀態後取出，因為取出會把機台移出array會導致更新機台暫存狀態undefinded出錯)*/
@@ -295,7 +311,19 @@ export class TakeOutModalComponent implements OnInit {
   changeFavorite(data: PartNumber_Model_Desc)
   {
     this.selection_Favorite.toggle(data);
-    this._localStorageService.setLocalStorageData("my_favorite", this.selection_Favorite.selected);
+
+    var favorite_checked = this.selection_Favorite.isSelected(data);
+    if (favorite_checked)
+    {
+      this.favorites.push(data);
+    }
+    else
+    {
+      let idx = this.favorites.findIndex(c => c.id == data.id);
+      this.favorites.splice(idx, 1);
+    }
+
+    this._localStorageService.setLocalStorageData("my_favorite", this.favorites);
     //window.opener.postMessage({ queryFavorites: true }, `${window.location.origin}`);
   }
 }

@@ -50,10 +50,23 @@ export class BoxOutComponent implements OnInit, OnChanges {
     private _soundPlayService: SoundPlayService,
     private _localStorageService: LocalStorageService
   ) {
+
+    let allCheckDefaultValue: boolean;
+    let conditionJsonString = this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_data_condition);
+    if (conditionJsonString == "undefined")
+    {
+      allCheckDefaultValue = true;
+    }
+    else
+    {
+      allCheckDefaultValue = JSON.parse(conditionJsonString)["all_ckb_list_option"];
+    }
+
     this.form = this.fb.group({
       txt_pn: new FormControl(""),//90NB0S51-T00070, 90NB0TE3-E00040
       txt_model: new FormControl(""),//UX482EG
       ckb_list_location: this.fb.array([]),
+      all_ckb_list_option: new FormControl(allCheckDefaultValue),
       ckb_list_option: this.fb.array([]),
       ckb_list_style: this.fb.array([]),
       ckb_list_status: this.fb.array([]),
@@ -84,11 +97,12 @@ export class BoxOutComponent implements OnInit, OnChanges {
 
         //設定初始值
         this.form.controls["txt_pn"].setValue(condition.pn);
-        this.form.controls["txt_model"].setValue(condition.model);
+        this.form.controls["txt_model"].setValue(condition.model);        
         this.sdBoxIn.model = condition.take_in_dt_s ? this.ngbDatePaser(condition.take_in_dt_s) : undefined;
         this.edBoxIn.model = condition.take_in_dt_e ? this.ngbDatePaser(condition.take_in_dt_e) : undefined;
         this.sdBoxOut.model = condition.take_out_dt_s ? this.ngbDatePaser(condition.take_out_dt_s) : undefined;
         this.edBoxOut.model = condition.take_out_dt_e ? this.ngbDatePaser(condition.take_out_dt_e) : undefined;
+        this.form.controls["all_ckb_list_option"].setValue(condition.all_ckb_list_option);
 
         for (var i = 0; i < arrayControlName.length; i++)
         {
@@ -197,6 +211,31 @@ export class BoxOutComponent implements OnInit, OnChanges {
     }
   }
 
+  //查詢條件(全部)勾選或取消
+  onAllCheckBoxChange(e, arrayName: string)
+  {
+    const dataArray: FormArray = this.form.get(arrayName) as FormArray;
+
+    let arrayLength = dataArray.length;
+    for (var i = arrayLength - 1; i >= 0; i--)
+    {
+      dataArray.removeAt(i);
+    }
+
+    this.options.forEach((item) => {
+
+      if (e.target.checked)
+      {//全部選取
+        item.checked = true;
+        dataArray.push(new FormControl(item.id));
+      }
+      else
+      {//全部選取
+        item.checked = false;
+      }
+    })
+  }
+
   //送出查詢
   onSubmit()
   {
@@ -218,6 +257,7 @@ export class BoxOutComponent implements OnInit, OnChanges {
         take_in_dt_e: this.dateParser(this.edBoxIn),
         take_out_dt_s: this.dateParser(this.sdBoxOut),
         take_out_dt_e: this.dateParser(this.edBoxOut),
+        all_ckb_list_option: this.form.controls["all_ckb_list_option"].value,
         locations: this.form.get('ckb_list_location').value,
         options: this.form.get('ckb_list_option').value,
         styles: this.form.get('ckb_list_style').value,

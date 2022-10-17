@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using UniversalLibrary.Models;
 using MachineBoxingManagement.Services.Models;
 using Excel_Manipulate;
+using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 
 namespace MachineBoxingManagement.Services
 {
@@ -34,8 +36,6 @@ namespace MachineBoxingManagement.Services
 
         public Result<XLWorkbook> GenerateBoxingStickers(List<MachineBoxingInfo> data, List<Tuple<string, string, string, DateTime?>> pnModelDescs = null)
         {
-            ////test
-            ////data = _caEDB01Context.MachineBoxingInfo.ToList();
             var result = new Result<XLWorkbook>
             {
                 Success = true,
@@ -101,158 +101,194 @@ namespace MachineBoxingManagement.Services
                     Colspan = 6,
                     RowHeight = 27
                 };
-                foreach (var dataopt in data.GroupBy(a => a.BoxingLocationId.ToString() + "." + a.BoxingName))
+
+                //資料分類，分為Fail拆解機台 & 非Fail拆解機台
+                var List_DataType = new List<Obj_DataType> {
+                    new Obj_DataType(){ IsFail = false, Datas = data.Where(c => !c.BoxingName.Contains("Fail")).ToList() },
+                    new Obj_DataType(){ IsFail = true, Datas = data.Where(c => c.BoxingName.Contains("Fail")).ToList() },
+                };
+                for (int k = 0; k < List_DataType.Count; k++)
                 {
-                    var location = allLocations.Where(a => a.Id == Convert.ToInt32(dataopt.Key.Split('.').GetValue(0).ToString())).Select(a => a.Name).FirstOrDefault();
-                    var sheetName = location + "-" + dataopt.Key.Split('.').GetValue(1).ToString();
+                    var _data = List_DataType[k];
 
-                    //var curWs = (dataopt.Key.Contains("OA") ? newxlswb.Worksheet("外箱貼紙OA").CopyTo(sheetName) : newxlswb.Worksheet("外箱貼紙").CopyTo(sheetName));
-                    var sourceWs = (dataopt.Key.Contains("OA") ? newxlswb.Worksheet("外箱貼紙OA") : newxlswb.Worksheet("外箱貼紙"));
-                    var curWs = newxlswb.AddWorksheet(sheetName);
-
-                    for (int i = 1; i <= oaProp.Colspan * oaProp.Rowcapacity; i++)
+                    var goupForPage = _data.Datas.GroupBy(c =>
                     {
-                        curWs.Column(i).Width = sourceWs.Column(i).Width;
-                    }
+                        if (_data.IsFail == false)
+                        {
+                            return $"{c.BoxingLocationId}.{c.BoxingName} ";//非Fail拆解機台。group by "{BoxingLocationId}.{箱名}"，作為Excel分頁依據
+                        }
+                        else
+                        {
+                            return $"{c.BoxingLocationId}.Fail拆解機台";//Fail拆解機台。group by "{BoxingLocationId}.Fail拆解機台}"，作為Excel分頁依據
+                        }
+                    });
+
+                    foreach (var dataopt in goupForPage)
+                    {//依照是否為Fail拆解機台進行group by，作為Excel分頁依據
+                        var location = allLocations.Where(a => a.Id == Convert.ToInt32(dataopt.Key.Split('.').GetValue(0).ToString())).Select(a => a.Name).FirstOrDefault();
+                        var sheetName = location + "-" + dataopt.Key.Split('.').GetValue(1).ToString();
+
+                        //var curWs = (dataopt.Key.Contains("OA") ? newxlswb.Worksheet("外箱貼紙OA").CopyTo(sheetName) : newxlswb.Worksheet("外箱貼紙").CopyTo(sheetName));
+                        var sourceWs = (dataopt.Key.Contains("OA") ? newxlswb.Worksheet("外箱貼紙OA") : newxlswb.Worksheet("外箱貼紙"));
+                        var curWs = newxlswb.AddWorksheet(sheetName);
+
+                        for (int i = 1; i <= oaProp.Colspan * oaProp.Rowcapacity; i++)
+                        {
+                            curWs.Column(i).Width = sourceWs.Column(i).Width;
+                        }
 
                     
 
-                    //normal
-                    var currow = 1;
-                    var curcol = 1;
+                        //normal
+                        var currow = 1;
+                        var curcol = 1;
 
-                    var currcap = 1;
+                        var currcap = 1;
 
-                    IXLRange xlrng;
-                    dynamic boxProp = npiProp;
-                    switch (dataopt.Key.Split('.').GetValue(1).ToString())
-                    {
-                        case "永久保留":
-                            xlrng = xlRanges["永久保留"];
-                            boxProp = ortProp;
-                            break;
-                        case "ORT":
-                            xlrng = xlRanges["ORT"];
-                            boxProp = ortProp;
-                            break;
-                        case "待燒OA":
-                            xlrng = xlRanges["待燒OA"];
-                            boxProp = oaProp;
-                            break;
-                        case "已燒OA":
-                            xlrng = xlRanges["已燒OA"];
-                            boxProp = oaProp;
-                            break;
-                        case "海運待燒OA":
-                            xlrng = xlRanges["海運待燒OA"];
-                            boxProp = oaProp;
-                            break;
-                        default:
-                            xlrng = xlRanges["預設"];
-                            boxProp = npiProp;
-                            break;
-                    };
-
-                    //initialize
-                    curWs.RowHeight = (double)boxProp.RowHeight;
-                    curWs.PageSetup.PageOrientation = XLPageOrientation.Landscape;
-                    curWs.PageSetup.PaperSize = XLPaperSize.A4Paper;
-                    curWs.PageSetup.FitToPages(1, 0);
-                    curWs.PageSetup.AddVerticalPageBreak((int)boxProp.Colspan * (int)boxProp.Rowcapacity);
-                    curWs.SheetView.SetView(XLSheetViewOptions.PageBreakPreview);
-                    curWs.SheetView.ZoomScale = 50;
-
-                    var pageCnt = 1;
-
-                    foreach (var box in dataopt.GroupBy(a => a.BoxingSerial))
-                    {
-                        IXLCell ccell;
-                        IXLWorksheet rsheet;
-                        var rrow = 0;
-                        var rcol = 0;
-
-                        ccell = curWs.Cell(currow, curcol);
-                        rrow = currow;
-                        rcol = curcol;
-                        rsheet = curWs;
+                        IXLRange xlrng;
+                        dynamic boxProp = npiProp;
+                        switch (dataopt.Key.Split('.').GetValue(1).ToString())
+                        {
+                            case "永久保留":
+                                xlrng = xlRanges["永久保留"];
+                                boxProp = ortProp;
+                                break;
+                            case "ORT":
+                                xlrng = xlRanges["ORT"];
+                                boxProp = ortProp;
+                                break;
+                            case "待燒OA":
+                                xlrng = xlRanges["待燒OA"];
+                                boxProp = oaProp;
+                                break;
+                            case "已燒OA":
+                                xlrng = xlRanges["已燒OA"];
+                                boxProp = oaProp;
+                                break;
+                            case "海運待燒OA":
+                                xlrng = xlRanges["海運待燒OA"];
+                                boxProp = oaProp;
+                                break;
+                            default:
+                                xlrng = xlRanges["預設"];
+                                boxProp = npiProp;
+                                break;
+                        };
 
                         //initialize
-                        rsheet.Cell(1, (int)boxProp.Colspan * (int)boxProp.Rowcapacity + (int)boxProp.DefaultOffsetCol).Value = " ";
+                        curWs.RowHeight = (double)boxProp.RowHeight;
+                        curWs.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+                        curWs.PageSetup.PaperSize = XLPaperSize.A4Paper;
+                        curWs.PageSetup.FitToPages(1, 0);
+                        curWs.PageSetup.AddVerticalPageBreak((int)boxProp.Colspan * (int)boxProp.Rowcapacity);
+                        curWs.SheetView.SetView(XLSheetViewOptions.PageBreakPreview);
+                        curWs.SheetView.ZoomScale = 50;
 
-                        xlrng.CopyTo(ccell);
+                        var pageCnt = 1;
 
-                        //rowheight
-                        for (int i = currow; i < currow + (int)boxProp.Rowspan; i++)
+                        var goupForListContent = dataopt.GroupBy(c =>
                         {
-                            rsheet.Row(i).Height = curWs.RowHeight;
-                        }
-
-                        var datasrow = (int)boxProp.SPartNumber.Y;
-
-                        //basic
-                        //rsheet.Cell(rrow, rcol).Style.Font.FontSize = 20.0;
-                        rsheet.Cell(rrow, rcol).Value = box.FirstOrDefault().BoxingName;
-                        rsheet.Cell(rrow + (int)boxProp.OpDate.Y, rcol + (int)boxProp.OpDate.X).Value = box.FirstOrDefault().OperateTime.ToString("yyyy/MM/dd");
-                        rsheet.Cell(rrow + (int)boxProp.BoxSerial.Y, rcol + (int)boxProp.BoxSerial.X).Value = box.FirstOrDefault().BoxingSerial;
-                        rsheet.Cell(rrow + (int)boxProp.Location.Y, rcol + (int)boxProp.Location.X).Value = location;
-                        rsheet.Cell(rrow + (int)boxProp.Operator.Y, rcol + (int)boxProp.Operator.X).Value = box.FirstOrDefault().Operator;
-
-                        //machine
-                        var machCnt = 0;
-                        foreach (var mach in box)
-                        {
-                            //pn
-                            rsheet.Cell(rrow + machCnt + datasrow, rcol + (int)boxProp.SPartNumber.X).Value = mach.PartNumber;
-                            //model
-                            rsheet.Cell(rrow + machCnt + datasrow, rcol + (int)boxProp.SModel.X).Value = pnModelDescs == null ? "NA" :
-                                pnModelDescs.Where(a => a.Item1.ToUpper() == mach.PartNumber.ToUpper()).Select(a => a.Item3).FirstOrDefault() ?? "N/A";
-                            //quantity
-                            rsheet.Cell(rrow + machCnt + datasrow, rcol + (int)boxProp.SQuanty.X).Value = 1;
-
-                            if (boxProp is OaStickerProp)
+                            if (_data.IsFail == false)
                             {
-                                //oa category
-                                rsheet.Cell(rrow + machCnt + datasrow, rcol + (int)boxProp.SCategory.X).Value = pnoaresult.Content.Any(a => a.Item1 == mach.PartNumber) ?
-                                    (pnoaresult.Content.Any(a => a.Item1 == mach.PartNumber && a.Item2.Length == 2) ?
-                                    pnoaresult.Content.Where(a => a.Item1 == mach.PartNumber && a.Item2.Length == 2).Select(a => a.Item2).First() :
-                                    "X") :
-                                    "";
-                                //instock time
-                                rsheet.Cell(rrow + machCnt + datasrow, rcol + (int)boxProp.InStockDate.X).Value = pnModelDescs == null ? "NA" :
-                                    pnModelDescs.Where(a => a.Item1.ToUpper() == mach.PartNumber.ToUpper()).Select(a => a.Item4).FirstOrDefault() == null ? "N/A"
-                                    : "'" + pnModelDescs.Where(a => a.Item1.ToUpper() == mach.PartNumber.ToUpper()).Select(a => a.Item4).FirstOrDefault().Value.ToString("MM/yy");
+                                return c.BoxingSerial.ToString();//非Fail拆解機台。group by "{BoxingSerial}"，作為Excel貼紙清單內容依據(每筆清單20筆機台)
                             }
+                            else
+                            {
+                                return $"{c.BoxingName}-{c.BoxingSerial}";//Fail拆解機台。group by $"{c.BoxingName}-{c.BoxingSerial}"，作為Excel貼紙清單內容依據(每筆清單20筆機台)
+                            }
+                        });
+                        foreach (var box in goupForListContent)
+                        {//依照是否為Fail拆解機台進行group by，作為Excel貼紙清單內容依據(每筆清單20筆機台)
+                            IXLCell ccell;
+                            IXLWorksheet rsheet;
+                            var rrow = 0;
+                            var rcol = 0;
 
-                            machCnt++;
-                        }
+                            ccell = curWs.Cell(currow, curcol);
+                            rrow = currow;
+                            rcol = curcol;
+                            rsheet = curWs;
 
-                        //subtotal
-                        rsheet.Cell(rrow + (int)boxProp.Subtotal.Y, rcol + (int)boxProp.Subtotal.X).Value = box.Count();
+                            //initialize
+                            rsheet.Cell(1, (int)boxProp.Colspan * (int)boxProp.Rowcapacity + (int)boxProp.DefaultOffsetCol).Value = " ";
 
+                            xlrng.CopyTo(ccell);
 
-                        if (++currcap > boxProp.Rowcapacity)
-                        {
-                            curcol = 1;
-                            currcap = 1;
-                            currow += (int)boxProp.Rowspan;
+                            //rowheight
                             for (int i = currow; i < currow + (int)boxProp.Rowspan; i++)
                             {
                                 rsheet.Row(i).Height = curWs.RowHeight;
                             }
-                            curWs.PageSetup.AddHorizontalPageBreak((int)boxProp.Rowspan * pageCnt++);
+
+                            var datasrow = (int)boxProp.SPartNumber.Y;
+
+                            //basic
+                            //rsheet.Cell(rrow, rcol).Style.Font.FontSize = 20.0;
+
+                            rsheet.Cell(rrow, rcol).Value = box.FirstOrDefault().BoxingName;
+                            rsheet.Cell(rrow + (int)boxProp.OpDate.Y, rcol + (int)boxProp.OpDate.X).Value = box.FirstOrDefault().OperateTime.ToString("yyyy/MM/dd");
+                            rsheet.Cell(rrow + (int)boxProp.BoxSerial.Y, rcol + (int)boxProp.BoxSerial.X).Value = box.FirstOrDefault().BoxingSerial;
+                            rsheet.Cell(rrow + (int)boxProp.Location.Y, rcol + (int)boxProp.Location.X).Value = location;
+                            rsheet.Cell(rrow + (int)boxProp.Operator.Y, rcol + (int)boxProp.Operator.X).Value = box.FirstOrDefault().Operator;
+
+                            //machine
+                            var machCnt = 0;
+                            foreach (var mach in box)
+                            {
+                                //pn
+                                rsheet.Cell(rrow + machCnt + datasrow, rcol + (int)boxProp.SPartNumber.X).Value = mach.PartNumber;
+                                //model
+                                rsheet.Cell(rrow + machCnt + datasrow, rcol + (int)boxProp.SModel.X).Value = pnModelDescs == null ? "NA" :
+                                    pnModelDescs.Where(a => a.Item1.ToUpper() == mach.PartNumber.ToUpper()).Select(a => a.Item3).FirstOrDefault() ?? "N/A";
+                                //quantity
+                                rsheet.Cell(rrow + machCnt + datasrow, rcol + (int)boxProp.SQuanty.X).Value = 1;
+
+                                if (boxProp is OaStickerProp)
+                                {
+                                    //oa category
+                                    rsheet.Cell(rrow + machCnt + datasrow, rcol + (int)boxProp.SCategory.X).Value = pnoaresult.Content.Any(a => a.Item1 == mach.PartNumber) ?
+                                        (pnoaresult.Content.Any(a => a.Item1 == mach.PartNumber && a.Item2.Length == 2) ?
+                                        pnoaresult.Content.Where(a => a.Item1 == mach.PartNumber && a.Item2.Length == 2).Select(a => a.Item2).First() :
+                                        "X") :
+                                        "";
+                                    //instock time
+                                    rsheet.Cell(rrow + machCnt + datasrow, rcol + (int)boxProp.InStockDate.X).Value = pnModelDescs == null ? "NA" :
+                                        pnModelDescs.Where(a => a.Item1.ToUpper() == mach.PartNumber.ToUpper()).Select(a => a.Item4).FirstOrDefault() == null ? "N/A"
+                                        : "'" + pnModelDescs.Where(a => a.Item1.ToUpper() == mach.PartNumber.ToUpper()).Select(a => a.Item4).FirstOrDefault().Value.ToString("MM/yy");
+                                }
+
+                                machCnt++;
+                            }
+
+                            //subtotal
+                            rsheet.Cell(rrow + (int)boxProp.Subtotal.Y, rcol + (int)boxProp.Subtotal.X).Value = box.Count();
+
+
+                            if (++currcap > boxProp.Rowcapacity)
+                            {
+                                curcol = 1;
+                                currcap = 1;
+                                currow += (int)boxProp.Rowspan;
+                                for (int i = currow; i < currow + (int)boxProp.Rowspan; i++)
+                                {
+                                    rsheet.Row(i).Height = curWs.RowHeight;
+                                }
+                                curWs.PageSetup.AddHorizontalPageBreak((int)boxProp.Rowspan * pageCnt++);
+                            }
+                            else
+                            {
+                                curcol += (int)boxProp.Colspan;
+                            }
+
                         }
-                        else
-                        {
-                            curcol += (int)boxProp.Colspan;
-                        }
-
-                    }
 
 
-                    curWs.PageSetup.PrintAreas.Add(1, 1, (int)boxProp.Rowspan * pageCnt, (int)boxProp.Colspan * (int)boxProp.Rowcapacity);
+                        curWs.PageSetup.PrintAreas.Add(1, 1, (int)boxProp.Rowspan * pageCnt, (int)boxProp.Colspan * (int)boxProp.Rowcapacity);
                     
 
+                    }
                 }
+                
                 newxlswb.Worksheet("外箱貼紙OA").Delete();
                 newxlswb.Worksheet("外箱貼紙").Delete();
                 result.Content = newxlswb;
@@ -319,6 +355,10 @@ namespace MachineBoxingManagement.Services
 
         }
 
-
+        private class Obj_DataType
+        {
+            public bool IsFail { get; set; }
+            public List<MachineBoxingInfo> Datas { get; set; }
+        }
     }
 }

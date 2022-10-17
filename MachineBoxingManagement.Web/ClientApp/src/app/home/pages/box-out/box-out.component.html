@@ -57,6 +57,7 @@
 
     <div class="form-group col-md-4">
       <label>機台選項：</label>
+      <input formControlName ="all_ckb_list_option" type="checkbox" (change)="onAllCheckBoxChange($event, 'ckb_list_option')">
       <div class="form-check" *ngFor="let option of options">
         <input class="form-check-input" type="checkbox" value={{option.id}} (change)="onCheckBoxChange($event, 'ckb_list_option')" [checked]="option.checked">
         <label class="form-check-label">
