@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MachineBoxingManagement.Ser
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MachineBoxingManagement.Web", "MachineBoxingManagement.Web\MachineBoxingManagement.Web.csproj", "{442E59A4-8C93-4F88-98B7-96FBB0F7F84C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MachineBoxingManagement.Tests", "MachineBoxingManagement.Tests\MachineBoxingManagement.Tests.csproj", "{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CAE|Any CPU = CAE|Any CPU
@@ -60,6 +62,16 @@ Global
 		{442E59A4-8C93-4F88-98B7-96FBB0F7F84C}.VT01|Any CPU.Build.0 = VT01|Any CPU
 		{442E59A4-8C93-4F88-98B7-96FBB0F7F84C}.VT02|Any CPU.ActiveCfg = VT02|Any CPU
 		{442E59A4-8C93-4F88-98B7-96FBB0F7F84C}.VT02|Any CPU.Build.0 = VT02|Any CPU
+		{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}.CAE|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}.CAE|Any CPU.Build.0 = Debug|Any CPU
+		{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}.VT01|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}.VT01|Any CPU.Build.0 = Debug|Any CPU
+		{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}.VT02|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}.VT02|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

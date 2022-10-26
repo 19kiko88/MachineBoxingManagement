@@ -64,6 +64,7 @@ namespace MachineBoxingManagement.Web.Services.Implements
             });
 
             //usedBoxes
+            var qq = _context.MachineBoxingInfo;
             GroupData.ForEach(item =>
             {
                 var Data = _context.MachineBoxingInfo.Where(c => c.BoxingLocationId == item.Key.Boxing_Location_Id && c.BoxingName == item.Key.Boxing_Series && c.BoxingSerial == item.Key.Boxing_Serial).ToList();
