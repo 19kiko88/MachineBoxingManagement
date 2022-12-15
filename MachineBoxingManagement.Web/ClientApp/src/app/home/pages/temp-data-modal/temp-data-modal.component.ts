@@ -4,10 +4,10 @@ import { MatTableDataSource } from '@angular/material/table';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { BoxOutService } from '../../../core/http/box-out.service';
 import { ReportService } from '../../../core/http/report.service';
-import { LocalStorageService } from '../../../core/services/local-storage.service';
 import { SweetalertService } from '../../../core/services/sweetalert.service';
 import { PartNumber_Model_Desc } from '../../../shared/models/dto/response/box-in';
-import { ITakeInPostMessageDto } from '../../../shared/models/dto/takein-postmessage-dto';
+import { LocalStorageKey } from '../../../shared/models/localstorage-model';
+import * as ls from "local-storage";
 
 @Component({
   selector: 'app-temp-data-modal',
@@ -24,7 +24,6 @@ export class TempDataModalComponent implements OnInit {
   constructor
   (
     private _boxOutService: BoxOutService,
-    private _localStorageService: LocalStorageService,
     private _reportService: ReportService,
     private _swlService: SweetalertService,
     public activeModal: NgbActiveModal
@@ -33,16 +32,14 @@ export class TempDataModalComponent implements OnInit {
 
   ngOnInit(): void
   {
-    let tempData = JSON.parse(this._localStorageService.getLocalStorageData("my_favorite"));
-    this.dataSource.data = tempData;
-    //checkbox default value
-    this.selection_Favorite = new SelectionModel<PartNumber_Model_Desc>(true, this.dataSource.data);
+    this.dataSource.data = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.myFavorite);
+    this.selection_Favorite = new SelectionModel<PartNumber_Model_Desc>(true, this.dataSource.data);    //checkbox default value
   }
 
   /*匯出暫存資料*/
   exportTempData()
   {
-    let tempData = JSON.parse(this._localStorageService.getLocalStorageData("my_favorite"));
+    let tempData = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.myFavorite);
 
     if (tempData.length <= 0) {
       this._swlService.showSwal("", `查無暫存資料`, "warning");
@@ -59,7 +56,7 @@ export class TempDataModalComponent implements OnInit {
   //匯出裝箱暫存資料
   exportFavoriteData()
   {
-    let tempData = JSON.parse(this._localStorageService.getLocalStorageData("my_favorite"));
+    let tempData = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.myFavorite);
 
     if (tempData.length <= 0) {
       this._swlService.showSwal("", `查無暫存資料`, "warning");
@@ -89,7 +86,7 @@ export class TempDataModalComponent implements OnInit {
 
   closeModal()
   {
-    this._localStorageService.setLocalStorageData("my_favorite", this.selection_Favorite.selected)
+    ls.set<PartNumber_Model_Desc[]>(LocalStorageKey.myFavorite, this.selection_Favorite.selected)
     this.activeModal.close('Close click');
   }
 

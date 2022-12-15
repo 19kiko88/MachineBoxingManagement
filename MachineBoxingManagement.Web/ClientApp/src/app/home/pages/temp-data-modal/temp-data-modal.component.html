@@ -7,13 +7,6 @@
     <div id="temp-table" class="table-responsive">
       <table mat-table #table [dataSource]="dataSource" class="table table-hover">
 
-        <!--<ng-container matColumnDef="Favorite">
-          <th mat-header-cell *matHeaderCellDef>暫存</th>
-          <td mat-cell *matCellDef="let element">
-            <app-favorite-button [inputTakeOutElement]="element"
-                                 [selected]="element.is_Favorite"></app-favorite-button>
-          </td>
-        </ng-container>-->
         <ng-container matColumnDef="Favorite">
           <th mat-header-cell *matHeaderCellDef>
             暫存

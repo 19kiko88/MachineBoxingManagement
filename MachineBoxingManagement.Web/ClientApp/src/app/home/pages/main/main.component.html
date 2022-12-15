@@ -1,34 +1,59 @@
 
-    <label for="inputEmail4">操作者：</label>
-    <input [ngModel]="userName"
+    <label for="inputEmail4"><span class="label-font">操作者：</span></label>
+    <input
+           hidden
+           [ngModel]="userName"
            (ngModelChange)="onUserNameChange($event)"
            style="width:50%"
            class="form-control"
            value="{{userName}}">
 
-    <br />
+    <div style="width:50%">
+      <app-multiselect-dropdown #_multiselect_dropdown  (outputOptionList)="setOperators($event)" [inputOptionList]="userList"></app-multiselect-dropdown>
+    </div>
 
+  <br/>
+
+  <div *ngIf="userName && userName != 'Null'; else noUser">
     <ul ngbNav #nav="ngbNav" [(activeId)]="active" class="nav-tabs">
-      <li [ngbNavItem]="1">
+      <li [ngbNavItem]="1" class="nav-li">
         <a ngbNavLink>裝箱維護</a>
         <ng-template ngbNavContent>
-          <app-box-in [activeNo]="1"
+          <app-box-in
+                      [activeNo]="1"
+                      (outputUserName)="setOperators($event)"
+                      [inputUUID]="initUUID"
                       [isMultiOpen]="isMultiOpen"
-                      [inputUserName]="userName"></app-box-in>
+                      [inputUserName]="userName">
+          </app-box-in>
         </ng-template>
 
       </li>
 
-      <li [ngbNavItem]="2">
+      <li [ngbNavItem]="2" class="nav-li">
         <a ngbNavLink>取出維護</a>
         <ng-template ngbNavContent>
           <app-box-out [activeNo]="2"
+                       (outputUserName)="setOperators($event)"
+                       [inputUUID]="initUUID"
                        [inputUserName]="userName"></app-box-out>
+        </ng-template>
+      </li>
+
+      <li [ngbNavItem]="3" class="nav-li">
+        <a ngbNavLink>設定</a>
+        <ng-template ngbNavContent>
+          <app-settings [activeNo]="3"></app-settings>
         </ng-template>
       </li>
     </ul>
 
     <div [ngbNavOutlet]="nav"></div>
+  </div>
 
+  <ng-template #noUser>
+    <span style="color:red; font-size:48px;">請先選擇操作人員!</span>
+  </ng-template>
 
+  <app-loader [loader]="isLoading"></app-loader>
 

@@ -44,16 +44,16 @@ export class CommonService extends BaseService {
       );
   }
 
-  getBoxingOptions(): Observable<any[]>
+  getBoxingOptions(): Observable<CheckBoxList[]>
   {//processResult只會回傳包裝過的json result.content，回傳值給model沒有用。
     const url = `/Common/GetBoxingOptions`;
     const options = this.generatePostOptions();
 
     return this.httpClient
-      .get<IResultDto<any[]>>(url, options)
+      .get<IResultDto<CheckBoxList[]>>(url, options)
       .pipe(
         tap((_) => this.log('getBoxingOptions'))
-        ,map((result) => this.processResult(result))
+        , map((res) =>  this.processResult(res) )
       );
   }
 
@@ -78,6 +78,33 @@ export class CommonService extends BaseService {
       .pipe(
         tap((_) => this.log('getBoxingStatus'))
         , map((result) => this.processResult(result))
+      );
+  }
+
+  //取得指定部門(系統-PC-產品管理中心-專案管理一處-管理一部)的人員清單
+  getEmployeeInfo(): Observable<IResultDto<any>> {
+    const url = `/Common/GetEmployeeInfo`;
+    const options = this.generatePostOptions();
+
+    return this.httpClient
+      .get<IResultDto<any>>(url, options)
+      .pipe(
+        tap((_) => this.log('GetEmployeeInfo'))
+        //, map((result) => this.processResult(result))
+      );
+  }
+
+  //檢察部門權限，僅供[系統-PC-產品管理中心-專案管理一處-管理一部]使用
+  DeptCheck(): Observable<IResultDto<boolean>>
+  {
+    const url = `/Common/DeptCheck`;
+    const options = this.generatePostOptions();
+
+    return this.httpClient
+      .get<IResultDto<boolean>>(url, options)
+      .pipe(
+        tap((_) => this.log('DeptCheck'))
+        //,map((result) => this.processResult(result))
       );
   }
 }

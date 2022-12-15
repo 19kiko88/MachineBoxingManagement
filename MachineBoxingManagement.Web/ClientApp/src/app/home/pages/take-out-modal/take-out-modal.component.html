@@ -1,5 +1,5 @@
 <div class="modal-header my-modal-header">
-  <h4 class="modal-title">機台取出</h4>
+  <h4 class="modal-title label-font">機台取出</h4>
 </div>
 
 <div class="modal-body">
@@ -30,7 +30,7 @@
         <!-- Serial No Column -->
         <ng-container matColumnDef="SerialNo" [sticky]="true">
           <th mat-header-cell *matHeaderCellDef> # </th>
-          <td mat-cell *matCellDef="let element; let i = index;"> {{i+1}} </td>
+          <td mat-cell *matCellDef="let element; let i = index;"> {{i+1+idx}} </td>
         </ng-container>
 
         <!-- Checkbox Column -->
@@ -113,7 +113,7 @@
         </ng-container>
 
         <ng-container matColumnDef="InStockDate">
-          <th mat-header-cell *matHeaderCellDef> 入庫日期 </th>
+          <th mat-header-cell *matHeaderCellDef> EQM入庫日期 </th>
           <td mat-cell *matCellDef="let element"> {{element.insDate}} </td>
         </ng-container>
 
@@ -133,7 +133,7 @@
         </ng-container>
 
         <ng-container matColumnDef="OperateTime">
-          <th mat-header-cell *matHeaderCellDef> 操作日期 </th>
+          <th mat-header-cell *matHeaderCellDef> 入MBM系統日期 </th>
           <td mat-cell *matCellDef="let element"> {{element.operateTime}} </td>
         </ng-container>
 
@@ -148,17 +148,31 @@
         </ng-container>
 
         <!--<ng-container matColumnDef="SSN">
-          <th mat-header-cell *matHeaderCellDef> SSN </th>
-          <td mat-cell *matCellDef="let element"> {{element.ssn}} </td>
-        </ng-container>-->
+        <th mat-header-cell *matHeaderCellDef> SSN </th>
+        <td mat-cell *matCellDef="let element"> {{element.ssn}} </td>
+      </ng-container>-->
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
 
         <tr [ngClass]="{'make-gold': i == lastRow, 'make-red': i == lastRow && isFullBox == true}" mat-row *matRowDef="let row; let i = index; columns: displayedColumns;"></tr>
       </table>
     </div>
-  </div>
 
+    <mat-paginator #paginator
+                   (page)="handlePageEvent($event)"
+                   [length]="inputTempDatasLength"
+                   [pageIndex]="0"
+                   [pageSize]="500"
+                   [pageSizeOptions]="[50, 100, 300, 500]"
+                   showFirstLastButtons>
+    </mat-paginator>
+    <!--<div class="demo-data">
+      <div style="color:white;">
+        Output event: {{(pageEvent | json) || 'No events dispatched yet'}}
+        getNumberOfPages: {{paginator.getNumberOfPages()}}
+      </div>
+    </div>-->
+  </div>
 </div>
 
 

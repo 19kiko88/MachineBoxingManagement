@@ -1,0 +1,20 @@
+/*Ref：
+    1.column換行：https://stackoverflow.com/questions/23800485/force-div-to-next-column
+*/
+
+.option-container {
+  column-count: 2;
+}
+
+/*
+.option-item {
+  height: 20px;
+  margin-bottom: 20px;
+  width: 100%;
+  break-inside: avoid-column;
+}*/
+
+ .option-item:nth-of-type(1) {
+   break-after: column;
+   display: block;
+ }

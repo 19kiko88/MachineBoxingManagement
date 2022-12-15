@@ -1,17 +1,19 @@
-import { Component, OnInit, Input, OnChanges, HostListener, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, HostListener, ViewChild, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
-import { NgbDate, NgbDatepicker, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { BoxOutService } from '../../../core/http/box-out.service';
 import { CommonService } from '../../../core/http/common.service';
-import { LocalStorageService } from '../../../core/services/local-storage.service';
-import { SoundPlayService } from '../../../core/services/sound-play.service';
 import { SweetalertService } from '../../../core/services/sweetalert.service';
 import { ITakeOutPostMessageDto } from '../../../shared/models/dto/takeout-postmessage-dto';
 import { CheckBoxList } from '../../../shared/models/dto/response/check-box-list';
 import { TempDataModalComponent } from '../temp-data-modal/temp-data-modal.component';
 import { NgbdDatepickerPopup } from '../../../shared/datepicker/datepicker.component';
 import { boxOutQueryCondition } from '../../../shared/models/dto/request/box-out-query-condition';
+import { ITakeInPostMessageDto } from '../../../shared/models/dto/takein-postmessage-dto';
+import { ModalOptionDetailComponent } from './modal-option-detail/modal-option-detail.component';
+import { LocalStorageKey } from '../../../shared/models/localstorage-model';
+import * as ls from "local-storage";
 
 @Component({
   selector: 'app-box-out',
@@ -21,6 +23,9 @@ import { boxOutQueryCondition } from '../../../shared/models/dto/request/box-out
 export class BoxOutComponent implements OnInit, OnChanges {
   @Input() activeNo: string;
   @Input() inputUserName: string;
+  @Input() inputUUID;
+  @Output() outputUserName: EventEmitter<any> = new EventEmitter<any>();
+
   @ViewChild("txt_sd_boxin") sdBoxIn: NgbdDatepickerPopup;
   @ViewChild("txt_ed_boxin") edBoxIn: NgbdDatepickerPopup;
   @ViewChild("txt_sd_boxout") sdBoxOut: NgbdDatepickerPopup;
@@ -35,9 +40,6 @@ export class BoxOutComponent implements OnInit, OnChanges {
   isLoading: boolean = false;
   Swal = Swal;
   previewWindow: Window; // 記錄開啟的 window 物件
-  ls_key_take_out_modal_open: string = "isTakeOutModalOpen";
-  ls_key_take_out_modal_data_condition: string = "takeOutModalQueryCondition";
-  ls_key_list_data: string = "temp_list_data";
   currentUserName: string = "";
   setToday: boolean = true;
 
@@ -47,19 +49,18 @@ export class BoxOutComponent implements OnInit, OnChanges {
     private _commonService: CommonService,
     private _boxoutService: BoxOutService,    
     private fb: FormBuilder,
-    private _soundPlayService: SoundPlayService,
-    private _localStorageService: LocalStorageService
+    private changeDetectorRef: ChangeDetectorRef
   ) {
-
     let allCheckDefaultValue: boolean;
-    let conditionJsonString = this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_data_condition);
-    if (conditionJsonString == "undefined")
+    const condition = ls.get<boxOutQueryCondition>(LocalStorageKey.takeOutModalQueryCondition);
+
+    if (!condition)
     {
       allCheckDefaultValue = true;
     }
     else
     {
-      allCheckDefaultValue = JSON.parse(conditionJsonString)["all_ckb_list_option"];
+      allCheckDefaultValue = condition["all_ckb_list_option"];
     }
 
     this.form = this.fb.group({
@@ -74,60 +75,73 @@ export class BoxOutComponent implements OnInit, OnChanges {
     })
   }
 
-  async ngOnInit()
+  ngOnInit()
   {
     this.isLoading = true;
 
+    ls.set<number>(LocalStorageKey.isTakeInModalOpen, -1);//分頁切到取出維護，就把裝箱維護modal關掉
+
+    /*重新載入ViewChild DOM
+     *Ref：
+     *1.[解決ViewChild undefined 問題]https://dotblogs.com.tw/Leo_CodeSpace/2019/05/08/145634
+     *2.[效能調校之認識 ChangeDetectorRef]https://ithelp.ithome.com.tw/articles/10209026
+     * */
+    this.changeDetectorRef.detectChanges();
+
+    /*主畫面關閉要通知彈跳視窗關閉*/
+    window.addEventListener("beforeunload", (event) => {
+      let passData: ITakeInPostMessageDto = {
+        isParentClose: true
+      }
+      this.previewWindow.postMessage(passData, `${window.location.origin}/take_out_list`)
+    }, false);
+
     /*checkbox設定*/
-    try
-    {
-      this.locations = await this._commonService.getBoxingLocations().toPromise();
-      this.options = await this._commonService.getBoxingOptions().toPromise();
-      this.styles = await this._commonService.getBoxingStyle().toPromise();
-      this.statuses = await this._commonService.getBoxingStatus().toPromise();
-      this.bufferAreas = [{ id: 1, name: "非暫存區", checked: true }, { id: 2, name: "暫存區", checked: true }]
+    try {
+      this._commonService.getBoxingLocations().subscribe(res => { this.locations = res });
+      this._commonService.getBoxingOptions().subscribe(res => {
+        this.options = res
+        this.options.forEach(c => c.name += c.remark);
+      });
+      this._commonService.getBoxingStyle().subscribe(res => { this.styles = res });
+      this._commonService.getBoxingStatus().subscribe(res => { this.statuses = res });
+      this.bufferAreas = [{ id: 1, name: "各系列庫房", checked: true }, { id: 2, name: "暫存區", checked: true }]
 
       let arrayControlName: string[] = ["ckb_list_location", "ckb_list_option", "ckb_list_style", "ckb_list_status", "ckb_list_bufferArea"];
       let arrayConditionPropertyName: string[] = ["locations", "options", "styles", "statuses", "buffer_areas"];
       let arrayCheckBoxs: CheckBoxList[][] = [this.locations, this.options, this.styles, this.statuses, this.bufferAreas];
+      const condition = ls.get<boxOutQueryCondition>(LocalStorageKey.takeOutModalQueryCondition);
 
-      if (this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_data_condition) != "undefined")
+      if (condition)
       {
-        let condition: boxOutQueryCondition = JSON.parse(this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_data_condition));
-
         //設定初始值
         this.form.controls["txt_pn"].setValue(condition.pn);
-        this.form.controls["txt_model"].setValue(condition.model);        
+        this.form.controls["txt_model"].setValue(condition.model);
         this.sdBoxIn.model = condition.take_in_dt_s ? this.ngbDatePaser(condition.take_in_dt_s) : undefined;
         this.edBoxIn.model = condition.take_in_dt_e ? this.ngbDatePaser(condition.take_in_dt_e) : undefined;
         this.sdBoxOut.model = condition.take_out_dt_s ? this.ngbDatePaser(condition.take_out_dt_s) : undefined;
         this.edBoxOut.model = condition.take_out_dt_e ? this.ngbDatePaser(condition.take_out_dt_e) : undefined;
         this.form.controls["all_ckb_list_option"].setValue(condition.all_ckb_list_option);
 
-        for (var i = 0; i < arrayControlName.length; i++)
-        {
+        for (var i = 0; i < arrayControlName.length; i++) {
           const arrayData = this.form.get(arrayControlName[i]) as FormArray;
 
-            for (var j = 0; j < arrayCheckBoxs[i].length; j++)
-            {
-              arrayCheckBoxs[i][j].checked = false;
+          for (var j = 0; j < arrayCheckBoxs[i].length; j++) {
+            arrayCheckBoxs[i][j].checked = false;
 
-              //從condition物件取得查詢條件內容
-              let arrayConditionProperty: number[] = condition[arrayConditionPropertyName[i].toString()];
+            //從condition物件取得查詢條件內容
+            let arrayConditionProperty: number[] = condition[arrayConditionPropertyName[i].toString()];
 
-              for (var k = 0; k < arrayConditionProperty.length; k++)
-              {
-                if (arrayCheckBoxs[i][j].id == arrayConditionProperty[k])
-                {
-                  arrayCheckBoxs[i][j].checked = true;
-                  arrayData.push(new FormControl(arrayCheckBoxs[i][j].id));//更新FormControl
-                }
+            for (var k = 0; k < arrayConditionProperty.length; k++) {
+              if (arrayCheckBoxs[i][j].id == arrayConditionProperty[k]) {
+                arrayCheckBoxs[i][j].checked = true;
+                arrayData.push(new FormControl(arrayCheckBoxs[i][j].id));//更新FormControl
               }
             }
+          }
         }
       }
-      else
-      {//預設checkbox為全部勾選設定
+      else {//預設checkbox為全部勾選設定
         for (var i = 0; i < arrayControlName.length; i++) {
           const arrayData = this.form.get(arrayControlName[i]) as FormArray;
           for (var j = 0; j < arrayCheckBoxs[i].length; j++) {
@@ -137,8 +151,7 @@ export class BoxOutComponent implements OnInit, OnChanges {
         }
       }
     }
-    catch (e)
-    {
+    catch (e) {
       this.Swal.fire({
         icon: "error",
         text: "初始資料載入失敗，請聯絡專案室.",
@@ -148,24 +161,24 @@ export class BoxOutComponent implements OnInit, OnChanges {
       })
     }
 
-    //切換分頁後，this.previewWindow會變成undefinded。如果已經有開啟modal，就要再重新open一次取得previewWindow
-    if (this.isTakeOutModalOpen() == "1")
+    /*切換分頁後，this.previewWindow會變成undefinded。如果已經有開啟modal，就要再重新open一次取得previewWindow*/
+    if (this.isTakeOutModalOpen() == 1)
     {
       this.openWindow();
     }
-    else {
+    else
+    {
       this.isLoading = false
     }
-
   }
 
   //變更操作者
+  //ngOnChanges只在@Input變更時發生作用
   ngOnChanges()
-  {
+  {//@Input的inputUserName變更要重新onSubmit()，重新開啟機台取出視窗，取得最新的UserName
     if (this.inputUserName != this.currentUserName)
-    {//@Input的inputUserName變更要重新onSubmit()，重新開啟機台取出視窗，取得最新的UserName
-
-      if (this.currentUserName && this.isTakeOutModalOpen() == "1")
+    {
+      if (this.currentUserName && this.isTakeOutModalOpen() == 1)
       {
         let validateMsg = this.formValidate();
         if (validateMsg.length > 0)
@@ -265,7 +278,7 @@ export class BoxOutComponent implements OnInit, OnChanges {
         buffer_areas: this.form.get('ckb_list_bufferArea').value
       };
 
-      this._localStorageService.setLocalStorageData(this.ls_key_take_out_modal_data_condition, querycondition);
+      ls.set<boxOutQueryCondition>(LocalStorageKey.takeOutModalQueryCondition, querycondition);
 
       this.openWindow();
     }
@@ -283,7 +296,7 @@ export class BoxOutComponent implements OnInit, OnChanges {
       //結束(關閉)彈跳視窗後更新取出清單
       modalRef.result
         .then(() => {
-          if (this.isTakeOutModalOpen() == "1")
+          if (this.isTakeOutModalOpen() == 1)
           {           
             let passData: ITakeOutPostMessageDto = {
               favoriteChange: true
@@ -302,8 +315,9 @@ export class BoxOutComponent implements OnInit, OnChanges {
 
   }
 
-  isTakeOutModalOpen(): string {
-    return this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_open);
+  isTakeOutModalOpen(): number
+  {
+    return ls.get<number>(LocalStorageKey.isTakeOutModalOpen);
   }
 
   openWindow(): void
@@ -311,8 +325,8 @@ export class BoxOutComponent implements OnInit, OnChanges {
     /*
      * popup parameters setting :https://javascript.info/popup-windows
      */
-    this.previewWindow = window.open(`take_out_list/${this.inputUserName}`, "Take Out Machine", "width=800,height=850");
-    this._localStorageService.setLocalStorageData(this.ls_key_take_out_modal_open, 1)
+    this.previewWindow = window.open(`take_out_list/${this.inputUserName}/${this.inputUUID}`, "Take Out Machine", "width=800,height=850");
+    ls.set<number>(LocalStorageKey.isTakeOutModalOpen, 1);
   }
 
   //接收機台清單彈跳視窗回傳是否查詢完畢訊號，解除isLoading遮罩
@@ -324,10 +338,10 @@ export class BoxOutComponent implements OnInit, OnChanges {
       this.isLoading = event.data.isLoading;              
     }
 
-    //if (event.data.queryFavorites != undefined)
-    //{
-    //  this.queryFavorites();
-    //}    
+    if (event.data.resetOperator != undefined)
+    {
+      this.outputUserName.emit("");
+    }
   }
 
   //轉換日期格視為yyyy/MM/dd字串
@@ -351,7 +365,11 @@ export class BoxOutComponent implements OnInit, OnChanges {
 
   ngbDatePaser(d: string): NgbDate
   {
-    return new NgbDate(Number(d.substring(0, 4)), Number(d.substring(5, 7)), Number(d.substring(9, 10)));
+    const year = Number(d.substring(0, 4));
+    const month = Number(d.substring(5, 7));
+    const day = Number(d.substring(8, 10));
+
+    return new NgbDate(year, month, day);
   }
 
   //輸入查詢條件檢核
@@ -382,5 +400,16 @@ export class BoxOutComponent implements OnInit, OnChanges {
     }
 
     return msg;
+  }
+
+  //機台選象複製內容
+  openOptionDetail() {
+    const modalRef = this._modalService.open(ModalOptionDetailComponent);
+    let textOptions: string = '';
+    this.options.forEach(c =>
+    {
+      textOptions += `${c.name}\r\n`;
+    })
+    modalRef.componentInstance.options = textOptions;
   }
 }

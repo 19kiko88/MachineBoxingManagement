@@ -13,6 +13,7 @@ using MachineBoxingManagement.Web.Models.Dto;
 using MachineBoxingManagement.Repositories.Data;
 using System.Linq;
 using MachineBoxingManagement.Repositories.Models;
+using System.Text.RegularExpressions;
 
 namespace MachineBoxingManagement.Web.Services.Implements
 {
@@ -46,6 +47,22 @@ namespace MachineBoxingManagement.Web.Services.Implements
             var GroupData = datas.GroupBy(g => new { g.Boxing_Location_Id, g.Boxing_Series, g.Boxing_Serial }).ToList();
             datas.ForEach(item =>
             {
+
+                //Operator字串切割
+                var Operator = "";
+                if (item.Operator.IndexOf(",") > 0)
+                {
+                    var split = item.Operator.Split(new char[] { ',', '_' });
+                    for (int i = 0; i < split.Length; i++)
+                    {
+                        if (i % 2 == 0)
+                        {
+                            Operator += $"{split[i]};";
+                        }
+                    }
+                    Operator = Operator.TrimEnd(';');
+                }
+
                 var Data = new MachineBoxingInfo()
                 {
                     PartNumber = item.Part_Number,
@@ -57,14 +74,13 @@ namespace MachineBoxingManagement.Web.Services.Implements
                     BoxingSerial = item.Boxing_Serial,
                     StackLevel = item.Turtle_Level,
                     StatusId = item.Status_Id,
-                    Operator = item.Operator,
+                    Operator = Operator,
                     OperateTime = Convert.ToDateTime(item.OperateTime)
                 };
                 ListData.Add(Data);
             });
 
             //usedBoxes
-            var qq = _context.MachineBoxingInfo;
             GroupData.ForEach(item =>
             {
                 var Data = _context.MachineBoxingInfo.Where(c => c.BoxingLocationId == item.Key.Boxing_Location_Id && c.BoxingName == item.Key.Boxing_Series && c.BoxingSerial == item.Key.Boxing_Serial).ToList();
@@ -96,9 +112,38 @@ namespace MachineBoxingManagement.Web.Services.Implements
         public async Task<FileStreamResult> Export_Temp_Data(List<PartNumber_Model_Desc> datas)
         {
             var ListData = new List<MachineBoxingManagement.Services.Models.MachineBoxingInfoView>();
+            var RegexEqmTable = _context.BoxingNameEqmMap.OrderBy(c => c.Id).ToList();
 
             datas.ForEach(item =>
             {
+                var EqmUser = "";
+
+                //依照不同的箱名找到對應的EQM掛帳人員
+                foreach (var item_eqm in RegexEqmTable)
+                {
+                    string Pattern = @$"{item_eqm.Rule}";
+                    Match Match = Regex.Match(item.Boxing_Series, Pattern);
+                    if (Match.Success)
+                    {
+                        EqmUser = item_eqm.EqmWarehouse;
+                        break;
+                    }
+                }
+
+                //Operator字串切割
+                var Operator = "";
+                if (item.Operator.IndexOf(",") > 0)
+                {
+                    var split = item.Operator.Split(new char[] { ',', '_' });
+                    for (int i = 0; i < split.Length; i++)
+                    {
+                        if (i%2 == 0)
+                        {
+                            Operator += $"{split[i]};";
+                        }
+                    }                                    
+                }
+
                 var Data = new MachineBoxingManagement.Services.Models.MachineBoxingInfoView()
                 {
                     ID = item.serial_No,
@@ -113,8 +158,9 @@ namespace MachineBoxingManagement.Web.Services.Implements
                     BoxingName = item.Boxing_Series,
                     BoxingSerial = item.Boxing_Serial,
                     StackLevel = item.Turtle_Level,
+                    EQM掛帳人員 = EqmUser,
                     Status = item.Status_Id.ToString(),
-                    Operator = item.Operator,
+                    Operator = Operator.TrimEnd(';'),
                     OperationTime = Convert.ToDateTime(item.OperateTime),
                     Takeout = item.Status_Id.ToString() == "777" ? true : false,
                     Takeouter = string.IsNullOrEmpty(item.TakerOut_Operator) ? "" : item.TakerOut_Operator,

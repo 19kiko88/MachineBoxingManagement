@@ -38,6 +38,7 @@ namespace MachineBoxingManagement.Web.Controllers
         public async Task<Result<Box_In_Processing>> ProcessingPN([FromBody] Box_In_Process_Input_Parameters data)
         {           
             var result = new Result<Box_In_Processing>() { Success = false };
+            data.PartNumber = data.PartNumber.Replace("\t", "");//去除條碼輸入有時候產生的特殊字元(Tab)
            
             try
             {

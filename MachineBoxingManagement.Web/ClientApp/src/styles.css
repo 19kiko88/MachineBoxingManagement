@@ -1,7 +1,91 @@
 /* Add application styles & imports to this file! */
 @import '@angular/material/prebuilt-themes/deeppurple-amber.css';
+:root {
+  --body_theme: var(--body);
+  --label_font_theme: var(--label_font);
+  --alert_msg_theme: var(--alert_msg);
+  --nva_li_theme: var(--nav_li);
+  --logo_path: var(--logo_path);
+}
+
+html, body {
+  min-height: 100vh;
+  height: auto;
+  margin: 0;
+  background-color: var(--body_theme);
+}
+
+.main-header {
+  background-color: #343a40;
+}
+
+/*Theme Style CSS go*/
+.label-font {
+  color: var(--label_font_theme);
+}
+/*.label-font::before {
+  content:"test_";
+  color: pink;
+}
+*/
+.nav-li {
+  background-color: var(--nva_li_theme);
+}
+
+.nav-link.active {
+  font-weight: bold;
+  color: #1b6ec2 !important;
+  border-color: darkgrey darkgrey darkgrey !important;
+}
+
+.nav-link {
+  color: black !important;
+}
+
+.date-picker button {
+    background-color: white;
+}
+
+/*裝箱維護主畫面 & 彈跳視窗-儲位資訊提示訊息*/
+.alert-msg {
+  color: var(--alert_msg_theme);
+}
+/*Theme Style CSS end*/
 
 
+
+
+
+/*logo & EIP go*/
+.logo-eip {
+  position: relative;
+  display: block;
+  float: left;
+/*  width: 315px;*/
+  height: 40px;
+  border-right: 1px solid #444;
+}
+
+.logo a {
+  display: block;
+  float: left;
+  width: 40px;
+  height: 54px;
+  margin: 0;
+  color: #fff;
+  padding: 6px 0 0 110px;
+  font-size: 16px;
+  letter-spacing: 1px;
+  text-decoration: none;
+  white-space: pre;
+  color: white;
+  background: var(--logo_path);
+}
+
+.logo-text {
+  color: white;
+}
+/*logo & EIP end*/
 
 /* Provide sufficient contrast against white background */
 a {
@@ -28,4 +112,8 @@ code {
 
 .container-width-max {
   max-width: 100%;
+}
+
+.multiselect-dropdown{
+    background-color: white;
 }

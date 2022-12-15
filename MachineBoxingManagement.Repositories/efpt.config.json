@@ -8,13 +8,18 @@
    "ModelNamespace": null,
    "OutputContextPath": "Data",
    "OutputPath": "Models",
+   "PreserveCasingWithRegex": true,
    "ProjectRootNamespace": "MachineBoxingManagement.Repositories",
    "Schemas": null,
    "SelectedHandlebarsLanguage": 0,
    "SelectedToBeGenerated": 0,
    "Tables": [
       {
-         "Name": "MachineStockManagement.BoxingStatus",
+         "Name": "MachineStockManagement.BoxingLocation",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.BoxingNameEqmMap",
          "ObjectType": 0
       },
       {
@@ -22,19 +27,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "MachineStockManagement.OaSpec",
-         "ObjectType": 0
-      },
-      {
-         "Name": "MachineStockManagement.MachineConfirmHistory",
-         "ObjectType": 0
-      },
-      {
          "Name": "MachineStockManagement.BoxingSeriesRule",
-         "ObjectType": 0
-      },
-      {
-         "Name": "MachineStockManagement.BoxingLocation",
          "ObjectType": 0
       },
       {
@@ -42,11 +35,23 @@
          "ObjectType": 0
       },
       {
-         "Name": "MachineStockManagement.MachineBoxingInfo",
+         "Name": "MachineStockManagement.BoxingStatus",
          "ObjectType": 0
       },
       {
          "Name": "MachineStockManagement.BoxingStyle",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.MachineBoxingInfo",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.MachineConfirmHistory",
+         "ObjectType": 0
+      },
+      {
+         "Name": "MachineStockManagement.OaSpec",
          "ObjectType": 0
       }
    ],
@@ -67,5 +72,6 @@
    "UseNodaTime": false,
    "UseNullableReferences": false,
    "UseSchemaFolders": false,
-   "UseSpatial": false
+   "UseSpatial": false,
+   "UseT4": false
 }

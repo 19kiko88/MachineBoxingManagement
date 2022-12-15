@@ -1,9 +1,8 @@
 import { SelectionModel } from '@angular/cdk/collections';
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { BoxOutService } from '../../../core/http/box-out.service';
 import { ReportService } from '../../../core/http/report.service';
-import { LocalStorageService } from '../../../core/services/local-storage.service';
 import { SweetalertService } from '../../../core/services/sweetalert.service';
 import { PartNumber_Model_Desc } from '../../../shared/models/dto/response/box-in';
 import { ITakeOutPostMessageDto } from '../../../shared/models/dto/takeout-postmessage-dto'
@@ -11,10 +10,12 @@ import { ActivatedRoute } from '@angular/router';
 import { SoundPlayService } from '../../../core/services/sound-play.service';
 import { Enum_Sound } from '../../../shared/models/enum/sound';
 import { boxOutItem } from '../../../shared/models/dto/request/box-out';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { IResultDto } from '../../../shared/models/dto/result-dto';
-import { observable, throwError } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 import { boxOutQueryCondition } from '../../../shared/models/dto/request/box-out-query-condition';
+import { MatPaginator, MatPaginatorIntl, PageEvent } from '@angular/material/paginator';
+import { LocalStorageKey } from '../../../shared/models/localstorage-model';
+import * as ls from "local-storage";
+import * as uuid from 'uuid';
 
 
 
@@ -28,40 +29,81 @@ export class TakeOutModalComponent implements OnInit {
 
   inputUserName: string;
   inputTempDatas: PartNumber_Model_Desc[] = [];
+  inputTempDatasLength: number = 0;
 
-  tempDatasBackup: PartNumber_Model_Desc[] = [];
   displayedColumns = ['Favorite', 'SerialNo', 'select', 'PartNumber', 'select_BufferArea', 'BoxingName', 'BoxingSerial', 'StackLevel', 'Model', 'Description', 'InStockDate', 'Location', 'BoxingOption', 'Operator', 'OperateTime', 'TakeOutOperator', 'TakeOutOperateTime' /*'SSN'*/];
   dataSource = new MatTableDataSource<PartNumber_Model_Desc>();
   selection = new SelectionModel<PartNumber_Model_Desc>(true, []);
   selection_BufferArea = new SelectionModel<PartNumber_Model_Desc>(true, []);
   selection_Favorite = new SelectionModel<PartNumber_Model_Desc>(true, []);
   isLoading: boolean = false;
-  ls_key_list_data: string = "temp_list_data";
-  ls_key_take_out_modal_data_condition: string = "takeOutModalQueryCondition";
   passData: ITakeOutPostMessageDto = { inputUserName: "", inputData: null, isParentClose: false }
   refreshMain: boolean = false;
-  favorites: PartNumber_Model_Desc[] = this._localStorageService.getLocalStorageData("my_favorite") == "undefined" ? [] : JSON.parse(this._localStorageService.getLocalStorageData("my_favorite"));
+  favorites: PartNumber_Model_Desc[] = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.myFavorite);
+  @ViewChild('paginator') paginator: MatPaginator;
+  pageEvent: PageEvent;
+  idx: number = 0;
 
   constructor(
     private _route: ActivatedRoute,
     private _reportService: ReportService,
     private _swlService: SweetalertService,
     private _boxOutService: BoxOutService,
-    private _localStorageService: LocalStorageService,
-    private _soundPlayService: SoundPlayService
+    private _soundPlayService: SoundPlayService,
+    private matPaginatorIntl: MatPaginatorIntl
   ) { }
 
   ngOnInit(): void
   {
     this.inputUserName = this._route.snapshot.params["user_name"];//第一次進彈跳視窗先從url取得user_name，之後主畫面改操作者會透過posetMessage更新
+    const defaultUUID = this._route.snapshot.params["uuid"];
+
+    if (defaultUUID != ls.get<uuid>(LocalStorageKey.uuid))
+    {
+      this._swlService.showSwalNoButtonConfirm("", "請由MBM主頁進入.", "error");
+      return;
+    }
 
     //查詢機台
     this.queryMachines();
 
     //監聽視窗關閉事件
     window.addEventListener("beforeunload", () => {
-      this._localStorageService.setLocalStorageData("isTakeOutModalOpen", 0);//0:彈跳視窗關閉, 1:彈跳視窗開啟
+      ls.set<number>(LocalStorageKey.isTakeOutModalOpen, 0);//0:彈跳視窗關閉, 1:彈跳視窗開啟
     }, false);
+
+    /*監測關閉modal*/
+    var intervalId = window.setInterval(() => {
+      if (
+        !ls.get<string>(LocalStorageKey.operators)//操作者清空後，沒有操作者就關閉modal。
+        ||!ls.get<string>(LocalStorageKey.jwt)//jwt過期或沒有jwt，關閉modal。
+        ||ls.get<number>(LocalStorageKey.isTakeOutModalOpen) == -1//切換到裝箱維護分頁時，強制關閉取出維護modal
+      )
+      {
+        clearInterval(intervalId);//結束interval
+        window.close();
+      }
+    }, 1000)
+
+    // 設定顯示筆數資訊文字
+    this.matPaginatorIntl.getRangeLabel = (page: number, pageSize: number, length: number): string => {
+      if (length === 0 || pageSize === 0) {
+        return `第 0 筆、共 ${length} 筆`;
+      }
+
+      length = Math.max(length, 0);
+      const startIndex = page * pageSize;
+      const endIndex = startIndex < length ? Math.min(startIndex + pageSize, length) : startIndex + pageSize;
+
+      return `第 ${startIndex + 1} - ${endIndex} 筆、共 ${length} 筆`;
+    };
+
+    // 設定其他顯示資訊文字
+    this.matPaginatorIntl.itemsPerPageLabel = '每頁筆數：';
+    this.matPaginatorIntl.nextPageLabel = '下一頁';
+    this.matPaginatorIntl.previousPageLabel = '上一頁';
+
+    ls.set<PartNumber_Model_Desc[]>(LocalStorageKey.bufferAreas, []);
   }
 
   /*監聽主畫面傳來的取出資訊*/
@@ -71,7 +113,7 @@ export class TakeOutModalComponent implements OnInit {
     //主畫面關閉，取出彈跳視窗跟著關閉
     if (event.data.isParentClose)
     {
-      this._localStorageService.setLocalStorageData("isTakeOutModalOpen", 0);//0:彈跳視窗關閉, 1:彈跳視窗開啟
+      ls.set<number>(LocalStorageKey.isTakeOutModalOpen, 0);//0:彈跳視窗關閉, 1:彈跳視窗開啟
       window.close();
     }
 
@@ -81,7 +123,6 @@ export class TakeOutModalComponent implements OnInit {
       this.inputUserName = event.data.inputUserName;
       this.inputTempDatas = event.data.inputData;
       this.dataSource.data = event.data.inputData;
-      this.tempDatasBackup = event.data.inputData
     }
 
     //變更暫存資料
@@ -93,14 +134,16 @@ export class TakeOutModalComponent implements OnInit {
   }
 
   /*[取出] checkbox*/
-  isAllSelected() {
+  isAllSelected()
+  {
     const numSelected = this.selection.selected.length;
     const numRows = this.dataSource.data.length;
     return numSelected === numRows;
   }
 
   /*[取出全選] checkbox*/
-  masterToggle() {
+  masterToggle()
+  {
     this.isAllSelected() ?
       this.selection.clear() :
       this.dataSource.data.forEach(row => this.selection.select(row));
@@ -142,7 +185,7 @@ export class TakeOutModalComponent implements OnInit {
       });
     }
 
-    this._localStorageService.setLocalStorageData("my_favorite", this.favorites);
+    ls.set<PartNumber_Model_Desc[]>(LocalStorageKey.myFavorite, this.favorites);
   }
 
   /*變更暫存區狀態 & 取出機台(先變更暫存區狀態後取出，因為取出會把機台移出array會導致更新機台暫存狀態undefinded出錯)*/
@@ -196,7 +239,7 @@ export class TakeOutModalComponent implements OnInit {
               resTotal += `總共異動暫存區失敗：${resFromSaveBufferArea.message}<br\><br\>`;
             }
             console.log("take out process chain[saveMachineBufferArea] done.");
-          }),
+          }),          
           switchMap(() =>
             this._boxOutService.takeoutMachines(this.inputUserName, arrayId)
           ),
@@ -221,9 +264,14 @@ export class TakeOutModalComponent implements OnInit {
         ).subscribe(
           (res) => {//next
             this.isLoading = false;
-            this._swlService.showSwal("", resTotal, "info");
-            this.queryMachines();//查詢機台
             console.log("take out process chain done.");
+
+            this._swlService.showSwalConfirm("", resTotal, "info",
+              () => {
+                window.opener.postMessage({ resetOperator: true }, `${window.location.origin}`);//通知主畫面清空操作者
+                window.close();
+              },null, null, null, false
+            )
           },
           (err) => {//error
             this.isLoading = false;
@@ -235,12 +283,13 @@ export class TakeOutModalComponent implements OnInit {
   }
 
   /*機台查詢*/
-  queryMachines(): void
+  queryMachines(pageIndex: number = 0, pageSize: number = 500, exportExcel: boolean = false): void
   {
     this.isLoading = true;
+    this.selection = new SelectionModel<PartNumber_Model_Desc>(true, []);
 
-    let condition: boxOutQueryCondition = JSON.parse(this._localStorageService.getLocalStorageData(this.ls_key_take_out_modal_data_condition));
-    this._boxOutService.queryMachines(condition, this._boxOutService.getFavoritesId())
+    let condition: boxOutQueryCondition = ls.get<boxOutQueryCondition>(LocalStorageKey.takeOutModalQueryCondition);
+    this._boxOutService.queryMachines(pageIndex, pageSize, condition, this._boxOutService.getFavoritesId())
       .subscribe(
         (res) => {
           if (res.message) {
@@ -250,13 +299,30 @@ export class TakeOutModalComponent implements OnInit {
             return;
           }
 
-          if (res.content.length > 0)
+          if (res.content.item1.length > 0)
           {
-            this.inputTempDatas = res.content;
-            this.dataSource.data = res.content;
-            //checkbox default value
+            this.inputTempDatas = res.content.item1;
+            this.dataSource.data = res.content.item1;
+            this.inputTempDatasLength = res.content.item2;//總筆數
+
+            //設定暫存checkbox是否勾選
             this.selection_Favorite = new SelectionModel<PartNumber_Model_Desc>(true, this.dataSource.data.filter(c => c.is_Favorite == true));
-            this.tempDatasBackup = JSON.parse(JSON.stringify(this.inputTempDatas));//避免傳址參考跟著變動，用json轉物件做備份供資料恢復
+
+            //設定暫存區checkbox是否勾選
+            const bufferAreas: PartNumber_Model_Desc[] = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.bufferAreas);
+            bufferAreas.forEach(c => {
+              this.changeBufferArea(c, true);
+            })
+
+            //匯出Excel
+            if (exportExcel)
+            {
+              this._reportService.exportTempData(this.inputTempDatas).toPromise()
+                .catch(
+                  err => {
+                    this._swlService.showSwal("", `無法產生Excel.<br\>錯誤訊息：${err.message}`, "warning");
+                  });
+            }
           }
           else {            
             this._swlService.showSwal("", "查無資料", "warning");
@@ -276,24 +342,37 @@ export class TakeOutModalComponent implements OnInit {
   }
 
   /*匯出暫存資料*/
-  exportTempData() {
-    if (this.inputTempDatas.length <= 0) {
-      this._swlService.showSwal("", `查無暫存資料`, "warning");
-      return;
-    }
-
-    this._reportService.exportTempData(this.inputTempDatas).toPromise()
-      .catch(
-        err => {
-          this._swlService.showSwal("", `無法產生Excel.<br\>錯誤訊息：${err.message}`, "warning");
-        });
+  exportTempData()
+  {
+    this.queryMachines(0, 65535, true);
   }
 
   /*勾選暫存區checkbox事件*/
-  changeBufferArea(data: PartNumber_Model_Desc)
+  changeBufferArea(data: PartNumber_Model_Desc, executeByQuery = false)
   {
     this.isLoading = true;
-    let item_is_Buffer_Area = !data.is_Buffer_Area;
+    let bufferAreas: PartNumber_Model_Desc[] = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.bufferAreas);
+    const item_is_Buffer_Area = !data.is_Buffer_Area;
+
+    //手動更改checkbox時，要把同廠區. 箱名. 箱號的資訊存放在LocalStorage，切換其他分頁時自動判斷暫存區checkbox是否勾選
+    if (executeByQuery == false)
+    {
+      let idx = bufferAreas.findIndex(c => c.boxing_Location_Id === data.boxing_Location_Id && c.boxing_Series === data.boxing_Series && c.boxing_Serial === data.boxing_Serial)
+      if (item_is_Buffer_Area == true)
+      {
+        if (idx < 0)
+        {
+          bufferAreas.push(data);
+        }
+      }
+      else
+      {
+        bufferAreas.splice(idx, 1);
+      }
+
+      ls.set<PartNumber_Model_Desc[]>(LocalStorageKey.bufferAreas, bufferAreas);
+    }
+
 
     for (var i = 0; i < this.inputTempDatas.length; i++)
     {
@@ -323,7 +402,14 @@ export class TakeOutModalComponent implements OnInit {
       this.favorites.splice(idx, 1);
     }
 
-    this._localStorageService.setLocalStorageData("my_favorite", this.favorites);
-    //window.opener.postMessage({ queryFavorites: true }, `${window.location.origin}`);
+    ls.set<PartNumber_Model_Desc[]>(LocalStorageKey.myFavorite, this.favorites);
+  }
+
+  // 分頁切換時，重新取得資料
+  handlePageEvent(e: PageEvent)
+  {
+    this.pageEvent = e;
+    this.queryMachines(e.pageIndex, e.pageSize);
+    this.idx = (e.pageIndex * e.pageSize);
   }
 }

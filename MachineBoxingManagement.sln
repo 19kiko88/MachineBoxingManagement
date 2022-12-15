@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MachineBoxingManagement.Ser
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MachineBoxingManagement.Web", "MachineBoxingManagement.Web\MachineBoxingManagement.Web.csproj", "{442E59A4-8C93-4F88-98B7-96FBB0F7F84C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MachineBoxingManagement.Tests", "MachineBoxingManagement.Tests\MachineBoxingManagement.Tests.csproj", "{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MachineBoxingManagement.Tests", "MachineBoxingManagement.Tests\MachineBoxingManagement.Tests.csproj", "{C5F8418D-BA5C-4CD2-B4BD-E8515A0ACFE7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

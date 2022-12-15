@@ -1,0 +1,20 @@
+<form [formGroup]="settingsForm">
+  <div class="form-row">
+    <div class="form-group col-md-4">
+      <label><span class="label-font">主題配色：</span></label>
+      <select #_selThemeType
+              class="form-control"
+              name="sel_theme_type"
+              formControlName="selThemeType">
+        <option value="0">淺色主題(預設)</option>
+        <option value="1">深色主題</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-3 col-md-3 ">
+      <button type="submit" class="btn btn-primary" (click)="saveSettings()">儲存設定</button>
+    </div>
+  </div>
+</form>

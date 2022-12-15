@@ -18,6 +18,7 @@ namespace MachineBoxingManagement.Repositories.Data
         }
 
         public virtual DbSet<BoxingLocation> BoxingLocation { get; set; }
+        public virtual DbSet<BoxingNameEqmMap> BoxingNameEqmMap { get; set; }
         public virtual DbSet<BoxingOption> BoxingOption { get; set; }
         public virtual DbSet<BoxingSeriesRule> BoxingSeriesRule { get; set; }
         public virtual DbSet<BoxingStageRule> BoxingStageRule { get; set; }
@@ -45,6 +46,23 @@ namespace MachineBoxingManagement.Repositories.Data
                     .HasMaxLength(20);
             });
 
+            modelBuilder.Entity<BoxingNameEqmMap>(entity =>
+            {
+                entity.ToTable("BoxingNameEqmMap", "MachineStockManagement");
+
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.EqmWarehouse).HasMaxLength(100);
+
+                entity.Property(e => e.EqmWorkId)
+                    .HasColumnName("EqmWorkID")
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.Rule)
+                    .IsRequired()
+                    .HasMaxLength(255);
+            });
+
             modelBuilder.Entity<BoxingOption>(entity =>
             {
                 entity.ToTable("BoxingOption", "MachineStockManagement");
@@ -56,6 +74,8 @@ namespace MachineBoxingManagement.Repositories.Data
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(20);
+
+                entity.Property(e => e.Remark).HasMaxLength(255);
             });
 
             modelBuilder.Entity<BoxingSeriesRule>(entity =>
@@ -236,217 +256,9 @@ namespace MachineBoxingManagement.Repositories.Data
                 entity.Property(e => e.Weight).HasColumnType("numeric");
             });
 
-            modelBuilder.HasSequence("groupdepartmenthier_id_seq", "CadToolManagement");
-
-            modelBuilder.HasSequence("grouptoollicense_id_seq", "CadToolManagement");
-
-            modelBuilder.HasSequence("toollicense_id_seq", "CadToolManagement");
-
-            modelBuilder.HasSequence("course_list_id_sn", "CAE_Learning");
-
-            modelBuilder.HasSequence("exam_answer_id_sn", "CAE_Learning");
-
-            modelBuilder.HasSequence("exam_option_id_sn", "CAE_Learning");
-
-            modelBuilder.HasSequence("personalcourseselectedinfo_id_sn", "CAE_Learning");
-
-            modelBuilder.HasSequence("personnelexamresult_id_sn", "CAE_Learning");
-
-            modelBuilder.HasSequence("question_list_id_sn", "CAE_Learning");
-
-            modelBuilder.HasSequence("userfeedback_sn", "CAE_Learning");
-
-            modelBuilder.HasSequence("Capacitor_Voltage_Voltage_SN_seq", "CAERDTool").StartsAt(33);
-
-            modelBuilder.HasSequence("CloseRequisition_CloseRequisitionID_seq", "CAPAccountManagementSystem").StartsAt(2);
-
-            modelBuilder.HasSequence("ExtendRequisition_ExtendRequisitionID_seq", "CAPAccountManagementSystem").StartsAt(2);
-
-            modelBuilder.HasSequence("Function_FunctionID_seq", "CAPAccountManagementSystem");
-
-            modelBuilder.HasSequence("Requisition_RequisitionID_seq", "CAPAccountManagementSystem").StartsAt(9);
-
-            modelBuilder.HasSequence("Signoff_SignoffID_seq", "CAPAccountManagementSystem").StartsAt(27);
-
-            modelBuilder.HasSequence("SignoffFlow_SignoffFlowID_seq", "CAPAccountManagementSystem").StartsAt(20);
-
-            modelBuilder.HasSequence("Status_StatusID_seq", "CAPAccountManagementSystem");
-
-            modelBuilder.HasSequence("SupportGroup_SupportGroupID_seq", "CAPAccountManagementSystem");
-
-            modelBuilder.HasSequence("SupportMember_SupportMemberID_seq", "CAPAccountManagementSystem").StartsAt(5);
-
-            modelBuilder.HasSequence("CCMember_ID_seq", "CAPAccountManagementSystem_Backup1103");
-
-            modelBuilder.HasSequence("CloseCCMember_ID_seq", "CAPAccountManagementSystem_Backup1103");
-
-            modelBuilder.HasSequence("ExtendCCMember_ID_seq", "CAPAccountManagementSystem_Backup1103");
-
-            modelBuilder.HasSequence("Authority_Item_Authority_SN_seq", "EMS_Navi").StartsAt(3);
-
-            modelBuilder.HasSequence("EMS_Account_Mapping_EMS_Account_SN_seq", "EMS_Navi").StartsAt(6400);
-
-            modelBuilder.HasSequence("PE_PPM_Info_Role_SN_seq", "EMS_Navi").StartsAt(1376);
-
-            modelBuilder.HasSequence("PE_PPM_Req_Detail_Request_Detail_SN_seq", "EMS_Navi").StartsAt(52);
-
-            modelBuilder.HasSequence("PE_PPM_Req_Signoff_Request_Signoff_SN_seq", "EMS_Navi").StartsAt(86);
-
-            modelBuilder.HasSequence("Revise_History_History_SN_seq", "EMS_Navi");
-
-            modelBuilder.HasSequence("Role_Authority_Role_SN_seq", "EMS_Navi").StartsAt(206);
-
-            modelBuilder.HasSequence("Schematic_Ext_Req_Info_Request_SN_Seq", "EMS_Navi").StartsAt(1586);
-
-            modelBuilder.HasSequence("Schematic_Ext_Req_Signoff_Request_Signoff_SN_seq", "EMS_Navi").StartsAt(22);
-
-            modelBuilder.HasSequence("Schematic_Mapping_Req_Info_Request_SN_seq", "EMS_Navi").HasMin(0);
-
-            modelBuilder.HasSequence("Schematic_Mapping_Req_Signoff_Request_Signoff_SN_seq", "EMS_Navi").HasMin(0);
-
-            modelBuilder.HasSequence("Authority_Item_Authority_SN_seq", "EMS_Navi_Backup1").StartsAt(3);
-
-            modelBuilder.HasSequence("PE_PPM_Info_Role_SN_seq", "EMS_Navi_Backup1").StartsAt(1376);
-
-            modelBuilder.HasSequence("PE_PPM_Req_Detail_Request_Detail_SN_seq", "EMS_Navi_Backup1").StartsAt(52);
-
-            modelBuilder.HasSequence("PE_PPM_Req_Signoff_Request_Signoff_SN_seq", "EMS_Navi_Backup1").StartsAt(86);
-
-            modelBuilder.HasSequence("Revise_History_History_SN_seq", "EMS_Navi_Backup1");
-
-            modelBuilder.HasSequence("Role_Authority_Role_SN_seq", "EMS_Navi_Backup1").StartsAt(206);
-
-            modelBuilder.HasSequence("Schematic_Ext_Req_Signoff_Request_Signoff_SN_seq", "EMS_Navi_Backup1").StartsAt(22);
-
-            modelBuilder.HasSequence("Authority_Item_Authority_SN_seq", "EMS_Navi_Backup1103").StartsAt(3);
-
-            modelBuilder.HasSequence("EMS_Account_Mapping_EMS_Account_SN_seq", "EMS_Navi_Backup1103").StartsAt(6400);
-
-            modelBuilder.HasSequence("PE_PPM_Info_Role_SN_seq", "EMS_Navi_Backup1103").StartsAt(1376);
-
-            modelBuilder.HasSequence("PE_PPM_Req_Detail_Request_Detail_SN_seq", "EMS_Navi_Backup1103").StartsAt(52);
-
-            modelBuilder.HasSequence("PE_PPM_Req_Signoff_Request_Signoff_SN_seq", "EMS_Navi_Backup1103").StartsAt(86);
-
-            modelBuilder.HasSequence("Revise_History_History_SN_seq", "EMS_Navi_Backup1103");
-
-            modelBuilder.HasSequence("Role_Authority_Role_SN_seq", "EMS_Navi_Backup1103").StartsAt(206);
-
-            modelBuilder.HasSequence("Schematic_Ext_Req_Signoff_Request_Signoff_SN_seq", "EMS_Navi_Backup1103").StartsAt(22);
-
-            modelBuilder.HasSequence("EMS資料表_E_No_seq", "LayoutProject_Test").StartsAt(7);
-
-            modelBuilder.HasSequence("PCBAutoJob_A_No_seq", "LayoutProject_Test").StartsAt(397);
-
-            modelBuilder.HasSequence("PCBBaseLine_B_No_seq", "LayoutProject_Test").StartsAt(98);
-
-            modelBuilder.HasSequence("PCBCostTarget_T_No_seq", "LayoutProject_Test");
-
-            modelBuilder.HasSequence("PCBHtmlText_H_No_seq", "LayoutProject_Test");
-
-            modelBuilder.HasSequence("PCBSupplier_S_No_seq", "LayoutProject_Test");
-
-            modelBuilder.HasSequence("PCBSupplier_S_No_seq1", "LayoutProject_Test").StartsAt(35);
-
-            modelBuilder.HasSequence("PCBSupplierBase_B_No_seq", "LayoutProject_Test").StartsAt(235);
-
-            modelBuilder.HasSequence("PCBVender_V_No_seq", "LayoutProject_Test").StartsAt(18);
-
-            modelBuilder.HasSequence("PCB不報價原因_C_No_seq", "LayoutProject_Test").StartsAt(19);
-
-            modelBuilder.HasSequence("PCB加價規則表_D_No_seq", "LayoutProject_Test").StartsAt(224);
-
-            modelBuilder.HasSequence("PCB加價項目代碼_O_No_seq", "LayoutProject_Test").StartsAt(59);
-
-            modelBuilder.HasSequence("PCB加價項目表_A_No_seq", "LayoutProject_Test").StartsAt(6826);
-
-            modelBuilder.HasSequence("PCB加價資訊表_R_No_seq", "LayoutProject_Test").StartsAt(13);
-
-            modelBuilder.HasSequence("PCB併版參數_S_No_seq", "LayoutProject_Test").StartsAt(19);
-
-            modelBuilder.HasSequence("PCB基板參數_B_No_seq", "LayoutProject_Test").StartsAt(72);
-
-            modelBuilder.HasSequence("PCB單價表_P_No_seq", "LayoutProject_Test").StartsAt(637);
-
-            modelBuilder.HasSequence("PCB裁切參數_L_No_seq", "LayoutProject_Test").StartsAt(70);
-
-            modelBuilder.HasSequence("ProjectD_D_No_seq", "LayoutProject_Test");
-
-            modelBuilder.HasSequence("ProjectT_T_NO_seq", "LayoutProject_Test").StartsAt(112);
-
-            modelBuilder.HasSequence("Project歸類表_C_No_seq", "LayoutProject_Test");
-
-            modelBuilder.HasSequence("RunningSet_R_No_seq", "LayoutProject_Test").StartsAt(13);
-
-            modelBuilder.HasSequence("Supplier加價規則表_D_No_seq", "LayoutProject_Test").StartsAt(367);
-
-            modelBuilder.HasSequence("Supplier加價項目表_A_No_seq", "LayoutProject_Test").StartsAt(553);
-
-            modelBuilder.HasSequence("Supplier併板參數_PL_No_seq", "LayoutProject_Test");
-
-            modelBuilder.HasSequence("Supplier基板參數_B_No_seq", "LayoutProject_Test");
-
-            modelBuilder.HasSequence("Supplier單價表_P_No_seq", "LayoutProject_Test").StartsAt(351);
-
-            modelBuilder.HasSequence("Supplier裁切參數_L_No_seq", "LayoutProject_Test");
-
-            modelBuilder.HasSequence("聯絡名單_C_No_seq", "LayoutProject_Test").StartsAt(27);
-
             modelBuilder.HasSequence("BoxingName_ID_seq", "MachineStockManagement")
                 .StartsAt(34)
                 .HasMax(2147483647);
-
-            modelBuilder.HasSequence("OrderStage_ID_seq", "Procurement");
-
-            modelBuilder.HasSequence("ApplySeriesDownload_ApplySeriesDownloadSN_seq", "RDIP").StartsAt(4);
-
-            modelBuilder.HasSequence("Cat_Parent_Cat_Parent_SN_seq", "RDIP")
-                .StartsAt(1915)
-                .HasMin(0);
-
-            modelBuilder.HasSequence("Category_Authority_Cat_Authority_SN_seq", "RDIP").StartsAt(88);
-
-            modelBuilder.HasSequence("Category_Hierarchy_Cat_Hier_SN_seq", "RDIP")
-                .StartsAt(1858)
-                .HasMin(0);
-
-            modelBuilder.HasSequence("Category_Item_Category_SN_seq", "RDIP")
-                .StartsAt(300)
-                .HasMin(0);
-
-            modelBuilder.HasSequence("CheckSetting_Check_SN_seq", "RDIP").StartsAt(17);
-
-            modelBuilder.HasSequence("DSN_Download_Log_DSN_Download_SN_seq", "RDIP").StartsAt(343);
-
-            modelBuilder.HasSequence("DSN_History_DSN_History_SN_seq", "RDIP").StartsAt(12);
-
-            modelBuilder.HasSequence("DSN_Info_DSN_SN_seq", "RDIP")
-                .StartsAt(3196)
-                .HasMin(0);
-
-            modelBuilder.HasSequence("DSN_Reference_Info_DSN_Ref_SN_seq", "RDIP")
-                .StartsAt(157)
-                .HasMin(0);
-
-            modelBuilder.HasSequence("FileType_BU_Mapping_ID_seq", "RDIP").StartsAt(300);
-
-            modelBuilder.HasSequence("FileType_FT_SN_seq", "RDIP").StartsAt(46);
-
-            modelBuilder.HasSequence("Generation_Category_Gen_Cat_SN_seq", "RDIP").StartsAt(949);
-
-            modelBuilder.HasSequence("NoticeAuthority_NoticeAuthority_SN_seq", "RDIP").StartsAt(9);
-
-            modelBuilder.HasSequence("OneTime_Download_OneTime_Download_SN_seq", "RDIP").StartsAt(17);
-
-            modelBuilder.HasSequence("OneTime_DownloadFile_OneTime_DownloadFile_SN_seq", "RDIP").StartsAt(45);
-
-            modelBuilder.HasSequence("Project_Download_Log_Project_Download_SN_seq", "RDIP").StartsAt(104);
-
-            modelBuilder.HasSequence("User_Authority_Authority_SN_seq", "RDIP")
-                .StartsAt(33448)
-                .HasMin(0);
-
-            modelBuilder.HasSequence("FileType_FT_SN_seq", "Schematic_SVN").StartsAt(44);
 
             OnModelCreatingPartial(modelBuilder);
         }

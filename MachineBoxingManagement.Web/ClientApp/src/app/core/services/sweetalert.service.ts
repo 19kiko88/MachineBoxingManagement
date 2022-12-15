@@ -57,7 +57,9 @@ export class SweetalertService {
     confirmCallBack?: () => any,
     cancelCallBack?: () => any,
     confirmButtonText?: string,
-    cancelButtonText?: string) {
+    cancelButtonText?: string,
+    showCancelButton?: boolean
+    ) {
 
     if (confirmCallBack == undefined) {
       confirmCallBack = () => { };
@@ -71,12 +73,15 @@ export class SweetalertService {
     if (!cancelButtonText) {
       cancelButtonText = "否"
     }
+    if (showCancelButton == undefined) {
+      showCancelButton = true;
+    }
 
     Swal.fire({
       title: title,
       html: text,
       icon: icon,
-      showCancelButton: true,
+      showCancelButton: showCancelButton,
       confirmButtonText: confirmButtonText,
       cancelButtonText: cancelButtonText,
       allowOutsideClick: false,//點擊空白處關閉confirm

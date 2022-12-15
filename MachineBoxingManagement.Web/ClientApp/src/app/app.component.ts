@@ -1,5 +1,7 @@
-import { Component, OnChanges, OnInit } from '@angular/core';
-import { CommonService } from './core/http/common.service';
+import { Component, OnInit } from '@angular/core';
+import { environment } from '../environments/environment';
+import { LocalStorageKey } from './shared/models/localstorage-model';
+import * as ls from "local-storage";
 
 
 @Component({
@@ -10,17 +12,22 @@ import { CommonService } from './core/http/common.service';
 
 export class AppComponent implements OnInit {
 
-  constructor(private _commonService: CommonService) {
-
-  }
+  constructor() { }
 
   title = 'app';
   active = 1;
   userName = "";
+  
+  async ngOnInit()
+  {
 
-  ngOnInit() {
-    //取得UserName
-    this._commonService.getUserName().toPromise().then(res => { this.userName = res; })
+    let theme_type = ls.get<number>(LocalStorageKey.themeType);
+    document.documentElement.style.setProperty("--body", theme_type == 0 ? "" : "#343a40");
+    document.documentElement.style.setProperty("--logo_path", `url(${environment.webSite}/assets/logo.png) no-repeat`);
+    document.documentElement.style.setProperty("--label_font", theme_type == 0 ? "" : "#ffffff");
+    document.documentElement.style.setProperty("--alert_msg", theme_type == 0 ? "" : "#ffffff");
+    document.documentElement.style.setProperty("--nav_li", "#ffffff");
+
   }
 
   onUserNameChange(name: string): void {

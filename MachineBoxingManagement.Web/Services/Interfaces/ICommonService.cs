@@ -1,5 +1,7 @@
 ﻿using System.Threading.Tasks;
 using MachineBoxingManagement.Repositories.Models;
+using CAEService;
+using System.Collections.Generic;
 
 namespace MachineBoxingManagement.Web.Services.Interfaces
 {
@@ -28,6 +30,20 @@ namespace MachineBoxingManagement.Web.Services.Interfaces
         /// </summary>
         /// <returns></returns>
         Task<BoxingStatus[]> GetBoxingStatus();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="deptname"></param>
+        /// <returns></returns>
+        public List<Employee> GetDeptEmployees(string deptname);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="username"></param>
+        /// <returns></returns>
+        public Employee GetEmployeeInfo(string username);
     }
 
 

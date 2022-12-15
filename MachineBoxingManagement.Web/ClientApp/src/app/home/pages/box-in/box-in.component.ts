@@ -1,10 +1,9 @@
-import { Component, Input, OnInit, ViewChild, AfterViewInit, ElementRef, HostListener, AfterViewChecked, OnChanges } from '@angular/core';
+import { Component, Input, Output, OnInit, ViewChild, AfterViewInit, ElementRef, HostListener, AfterViewChecked, OnChanges, EventEmitter } from '@angular/core';
 import { async } from '@angular/core/testing';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DropDowList } from '../../../shared/models/dto/response/drop-down-list';
 import { PartNumber_Model_Desc } from '../../../shared/models/dto/response/box-in';
-import { Observable } from 'rxjs';
 import { CounterPlusMinusComponent } from './../../../shared/counter-plus-minus/counter-plus-minus.component'
 import { BoxInService } from '../../../core/http/box-in.service';
 import { CommonService } from './../../../core/http/common.service';
@@ -14,8 +13,9 @@ import Swal from 'sweetalert2';
 import { SoundPlayService } from '../../../core/services/sound-play.service';
 import { Enum_Sound } from '../../../shared/models/enum/sound';
 import { ITakeInPostMessageDto } from '../../../shared/models/dto/takein-postmessage-dto'
-import { LocalStorageService } from '../../../core/services/local-storage.service';
 import { IResultDto } from '../../../shared/models/dto/result-dto';
+import { LocalStorageKey } from '../../../shared/models/localstorage-model';
+import * as ls from "local-storage";
 
 @Component({
   selector: 'app-box-in',
@@ -26,8 +26,10 @@ import { IResultDto } from '../../../shared/models/dto/result-dto';
 export class BoxInComponent implements OnInit, OnChanges {
   @Input() activeNo: string;
   @Input() inputUserName: string;
-  @Input() isMultiOpen: boolean;  
-
+  @Input() isMultiOpen: boolean;
+  @Input() inputUUID;
+  @Output() outputUserName: EventEmitter<any> = new EventEmitter<any>();
+  
   locations: DropDowList[] = [] ;
   options: any[] = [];
   style: any[] = [];
@@ -36,8 +38,6 @@ export class BoxInComponent implements OnInit, OnChanges {
   stocking_info_qty: number = -1;
   stocking_info_turtle_level: number = -1;
   stocking_info_qty_desc: string;
-  ls_key_list_data: string = "temp_list_data";
-  ls_key_take_in_modal_open: string = "isTakeInModalOpen";
   isLoading: boolean = false;
   currentPN: string = "";
   Swal = Swal;
@@ -78,43 +78,45 @@ export class BoxInComponent implements OnInit, OnChanges {
     private _boxInService: BoxInService,
     private _reportService: ReportService,
     private _swlService: SweetalertService,
-    private _soundPlayService: SoundPlayService,
-    private _localStorageService: LocalStorageService
+    private _soundPlayService: SoundPlayService
   )
   { }
 
 
   ngOnInit()
   {
+    ls.set<number>(LocalStorageKey.isTakeOutModalOpen, -1);//分頁切到裝箱維護，就把取出維護modal關掉
+
     this.GetInitData();
 
     /*主畫面關閉要通知彈跳視窗關閉*/
-    let passData: ITakeInPostMessageDto = {
-      isParentClose: true
-    }
     window.addEventListener("beforeunload", (event) => {
+      let passData: ITakeInPostMessageDto = {
+        isParentClose: true
+      }
       this.previewWindow.postMessage(passData, `${window.location.origin}/take_in_list`)
     }, false);
 
 
-    //切換分頁後，this.previewWindow會變成undefinded。如果已經有開啟modal，就要再重新open一次取得previewWindow
-    if (this._localStorageService.getLocalStorageData(this.ls_key_take_in_modal_open) == "1")
+    /*切換分頁後，this.previewWindow會變成undefinded。如果已經有開啟modal，就要再重新open一次取得previewWindow*/
+    if (ls.get<number>(LocalStorageKey.isTakeInModalOpen) == 1)
     {
       this.openWindow();
-    }    
+    }
   }
 
+  //ngOnChanges只在@Input變更時發生作用
   ngOnChanges()
-  {
+  {//@Input的inputUserName變更要重新openWindow()，重新開啟暫存清單視窗，取得最新的UserName
+    //操作者變更
     if (this.inputUserName != this.currentUserName)
-    {//@Input的inputUserName變更要重新openWindow()，重新開啟暫存清單視窗，取得最新的UserName
-      if (!this.currentUserName || this._localStorageService.getLocalStorageData(this.ls_key_take_in_modal_open) == "1")
+    {
+      if (this.currentUserName && ls.get<number>(LocalStorageKey.isTakeInModalOpen) == 1)
       {
-        this.openWindow();
-      }
-
+          this.openWindow();
+        }
       this.currentUserName = this.inputUserName;
-    }   
+    }
   }
 
   /**
@@ -141,14 +143,15 @@ export class BoxInComponent implements OnInit, OnChanges {
   @ViewChild("_txt_box_turtle_level") boxing_turtle_level: CounterPlusMinusComponent;
   @ViewChild("_txt_pn") txt_pn_element!: ElementRef<HTMLInputElement>;
 
-  async GetInitData(): Promise<void> {    
+  GetInitData() {    
     this.isLoading = true;
+
     try
     {
       this.temp_save = true;
-      this.locations = await this._commonService.getBoxingLocations().toPromise();
-      this.options = await this._commonService.getBoxingOptions().toPromise();
-      this.style = await this._commonService.getBoxingStyle().toPromise();
+      this._commonService.getBoxingLocations().subscribe(res => { this.locations = res });
+      this._commonService.getBoxingOptions().subscribe(res => { this.options = res });
+      this._commonService.getBoxingStyle().subscribe(res => { this.style = res });
     }
     catch (e) {
       this.Swal.fire({
@@ -159,7 +162,10 @@ export class BoxInComponent implements OnInit, OnChanges {
         allowEscapeKey: false//ESC關閉confirm
       })
     }
-    this.isLoading = false;
+    finally
+    {
+      this.isLoading = false;
+    }
   }
 
   public boxInForm: FormGroup = new FormGroup({
@@ -226,7 +232,11 @@ export class BoxInComponent implements OnInit, OnChanges {
 
             this.isLoading = false;
           }
-        });
+        })
+        .catch(ex => {
+          this._swlService.showSwal("", `P/N處理發生異常，請聯絡CAE Team，錯誤訊息：<br\>${ex}`, "error");
+          this.isLoading = false;
+        })
     }
   }
 
@@ -286,18 +296,14 @@ export class BoxInComponent implements OnInit, OnChanges {
   //從localStorage取得暫存資料
   getPnDataList(): PartNumber_Model_Desc[]
   {
-    var json = this._localStorageService.getLocalStorageData(this.ls_key_list_data, JSON.stringify(this.array_pn_model_desc));
-    if (json == "undefined") {
-      return this.array_pn_model_desc;
-    }
-
-    return JSON.parse(json);
+    const tempListData = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.tempListData);
+    return tempListData;
   }
 
   //清空localStorage
   resetPnDataList(): void {
     this.array_pn_model_desc = [];
-    localStorage.setItem(this.ls_key_list_data, JSON.stringify(this.array_pn_model_desc));
+    localStorage.setItem(LocalStorageKey.tempListData, JSON.stringify(this.array_pn_model_desc));
   }
 
   //手動暫存資料，有參數為立即暫存
@@ -314,11 +320,6 @@ export class BoxInComponent implements OnInit, OnChanges {
 
     if (this.boxInForm.controls["txt_pn"].value)
     {
-      //if (this.getPnDataList().length >= 100) {
-      //  this._swlService.showSwal("", "暫存資料已達100筆，請先批次儲存.", "warning");
-      //  return;
-      //}
-
       if (!this.temp_save)
       {//沒有勾選立即暫存
         pnData = this.pn_model_desc;
@@ -347,7 +348,7 @@ export class BoxInComponent implements OnInit, OnChanges {
         }
       })
 
-      this._localStorageService.setLocalStorageData(this.ls_key_list_data, tempData);
+      ls.set<PartNumber_Model_Desc[]>(LocalStorageKey.tempListData, tempData);
 
       //add data to array
       this.array_pn_model_desc = this.getPnDataList();
@@ -355,7 +356,7 @@ export class BoxInComponent implements OnInit, OnChanges {
       this.array_pn_model_desc.forEach(function (item, index) {
         item.serial_No = index + 1;
       })
-      localStorage.setItem(this.ls_key_list_data, JSON.stringify(this.array_pn_model_desc));
+      localStorage.setItem(LocalStorageKey.tempListData, JSON.stringify(this.array_pn_model_desc));
 
       //over 20 pcs
       this._boxInService.getStockingInfoByBoxSerial(pnData.boxing_Series, pnData.boxing_Location_Id, pnData.boxing_Serial, this.getPnDataList()).subscribe(
@@ -385,10 +386,10 @@ export class BoxInComponent implements OnInit, OnChanges {
           }
           newArray.push(c);
         });
-        localStorage.setItem(this.ls_key_list_data, JSON.stringify(newArray));
+        localStorage.setItem(LocalStorageKey.tempListData, JSON.stringify(newArray));
       }
 
-      if (this._localStorageService.getLocalStorageData(this.ls_key_take_in_modal_open) == "0")
+      if (ls.get<number>(LocalStorageKey.isTakeInModalOpen) == 0)
       {
         this.openWindow();
       }
@@ -426,10 +427,8 @@ export class BoxInComponent implements OnInit, OnChanges {
       "是否確認上傳資料並產出外箱貼紙?",
       "warning",
       () => {
-
         this._reportService.exportSticker(data).subscribe(
           resExportSticker => {
-
             this.getData(resExportSticker).then(
               (resExportSticker) => {
                 console.log(`ExportSticker done. res：${resExportSticker}`);
@@ -448,24 +447,22 @@ export class BoxInComponent implements OnInit, OnChanges {
                       //debugger;
                       this.getData(resSaveBoxingInfos).then(
                         (resSaveBoxingInfos: IResultDto<number>) => {
-                          console.log(`Process end. save success count：${resSaveBoxingInfos.content}`);
-                          this.isLoading = false;
+                          console.log(`Process end. save success count：${resSaveBoxingInfos.content}`);                          
                         }
-                      ).catch(
-                        (err) => {
+                      ).finally(() => {
                           this.isLoading = false;
+                          this.outputUserName.emit("");
                         }
                       )
                     }
                   }
                 )
               }
-            ).catch(
-              (err) => {
+            ).finally(() => {
                 this.isLoading = false;
+                this.outputUserName.emit("");
               }
             )
-
           },
           err => {
 
@@ -484,7 +481,12 @@ export class BoxInComponent implements OnInit, OnChanges {
                     this._swlService.showSwal("", `上傳完成，上傳資料筆數：${res.content}`, "warning");
                     this.postData(true);
                     this.isLoading = false;
-                  }
+                    this.outputUserName.emit("");                  }
+                },
+                (err) => {
+                  //error
+                  this.isLoading = false;
+                  this._swlService.showSwal("", "系統錯誤，請聯繫CAE Team.", "error");
                 })
               },
               () => {
@@ -495,7 +497,9 @@ export class BoxInComponent implements OnInit, OnChanges {
           }
         )
       },
-      () => { this.isLoading = false; }
+      () => {
+        this.isLoading = false;
+      }
     );
 
   }
@@ -551,8 +555,8 @@ export class BoxInComponent implements OnInit, OnChanges {
       /*
        * popup parameters setting :https://javascript.info/popup-windows
        */
-      this.previewWindow = window.open(`take_in_list/${this.inputUserName}`, "Take In Machine", "width=800,height=850");
-      this._localStorageService.setLocalStorageData(this.ls_key_take_in_modal_open, 1)
+      this.previewWindow = window.open(`take_in_list/${this.inputUserName}/${this.inputUUID}`, "Take In Machine", "width=800,height=850");
+      ls.set<number>(LocalStorageKey.isTakeInModalOpen, 1);
     }
   }
 

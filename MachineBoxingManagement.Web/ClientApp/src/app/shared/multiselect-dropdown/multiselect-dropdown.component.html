@@ -1,0 +1,9 @@
+<ng-multiselect-dropdown [placeholder]="'請選擇操作者'"
+                         [settings]="dropdownSettings"
+                         [data]="dropdownList"
+                         [(ngModel)]="selectedItems"
+                         (onSelect)="onItemSelect($event)" 
+                         (onDeSelect)="onItemDeSelect($event)"
+                         (onSelectAll)="onSelectAll($event)"
+                         (onDeSelectAll)="onDeSelectAll($event)">
+</ng-multiselect-dropdown>

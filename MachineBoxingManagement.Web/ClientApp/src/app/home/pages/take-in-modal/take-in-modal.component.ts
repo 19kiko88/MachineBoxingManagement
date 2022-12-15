@@ -2,15 +2,16 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { Component, HostListener, OnInit } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { BoxInService } from '../../../core/http/box-in.service';
-import { BoxOutService } from '../../../core/http/box-out.service';
 import { ReportService } from '../../../core/http/report.service';
-import { LocalStorageService } from '../../../core/services/local-storage.service';
 import { SweetalertService } from '../../../core/services/sweetalert.service';
 import { PartNumber_Model_Desc } from '../../../shared/models/dto/response/box-in';
 import { ITakeInPostMessageDto } from '../../../shared/models/dto/takein-postmessage-dto'
 import { ActivatedRoute } from '@angular/router';
 import { SoundPlayService } from '../../../core/services/sound-play.service';
 import { Enum_Sound } from '../../../shared/models/enum/sound';
+import { LocalStorageKey } from '../../../shared/models/localstorage-model';
+import * as ls from "local-storage";
+import * as uuid from 'uuid';
 
 @Component({
   selector: 'app-take-in-modal',
@@ -29,7 +30,6 @@ export class TempListModalComponent implements OnInit {
   selection_BufferArea = new SelectionModel<PartNumber_Model_Desc>(true, []);
   isLoading: boolean = false;
   selectType: string = "刪除?";
-  ls_key_list_data: string = "temp_list_data";
   passData: ITakeInPostMessageDto = { inputUserName: "", inputData: null, isParentClose: false }
   refreshMain: boolean = false;
   lastRow: number = 0;
@@ -42,18 +42,25 @@ export class TempListModalComponent implements OnInit {
     private _reportService: ReportService,
     private _swlService: SweetalertService,
     private _boxInService: BoxInService,
-    private _localStorageService: LocalStorageService,
     private _soundPlayService: SoundPlayService
   ) { }
 
   ngOnInit(): void
   {
-    let userName = this._route.snapshot.params["user_name"];
+    const userName = this._route.snapshot.params["user_name"];
+    const defaultUUID = this._route.snapshot.params["uuid"];
+    const tempListData = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.tempListData);
 
-    if (this._localStorageService.getLocalStorageData(this.ls_key_list_data, JSON.stringify([])) != "undefined")
+    if (defaultUUID != ls.get<uuid>(LocalStorageKey.uuid))
+    {
+      this._swlService.showSwalNoButtonConfirm("", "請由MBM主頁進入.", "error");
+      return;
+    }
+
+    if (tempListData.length > 0)
     {
       this.inputUserName = userName;//第一次進彈跳視窗先從url取得user_name，之後主畫面改操作者會透過posetMessage更新
-      this.inputTempDatas = JSON.parse(this._localStorageService.getLocalStorageData(this.ls_key_list_data));
+      this.inputTempDatas = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.tempListData);
       this.dataSource.data = this.inputTempDatas;
       this.tempDatasBackup = JSON.parse(JSON.stringify(this.inputTempDatas));//避免傳址參考跟著變動，用json轉物件做備份供資料恢復
       this.lastRow = this.inputTempDatas.length - 1;
@@ -61,8 +68,21 @@ export class TempListModalComponent implements OnInit {
 
     /*監聽視窗關閉事件 */
     window.addEventListener("beforeunload", () => {
-      this._localStorageService.setLocalStorageData("isTakeInModalOpen", 0);//0:彈跳視窗關閉, 1:彈跳視窗開啟
+      ls.set<number>(LocalStorageKey.isTakeInModalOpen, 0);//0:彈跳視窗關閉, 1:彈跳視窗開啟
     }, false);
+
+    /*監測關閉modal*/
+    var intervalId = window.setInterval(() => {
+      if (
+        !ls.get<string>(LocalStorageKey.operators)//操作者清空後，沒有操作者就關閉modal。
+        || !ls.get<string>(LocalStorageKey.jwt)//jwt過期或沒有jwt，關閉modal。
+        || ls.get<number>(LocalStorageKey.isTakeInModalOpen) == -1//切換到取出維護分頁時，強制關閉裝箱維護modal
+      )
+      {
+        clearInterval(intervalId);//結束interval
+        window.close();
+      }
+    }, 1000)
   }
 
   /*監聽主畫面傳來的機台資訊*/
@@ -70,8 +90,9 @@ export class TempListModalComponent implements OnInit {
   onMessage(event: MessageEvent<ITakeInPostMessageDto>): void
   {
     //主畫面關閉，裝箱彈跳視窗跟著關閉
-    if (event.data.isParentClose) {
-      this._localStorageService.setLocalStorageData("isTakeInModalOpen", 0);//0:彈跳視窗關閉, 1:彈跳視窗開啟
+    if (event.data.isParentClose)
+    {
+      ls.set<number>(LocalStorageKey.isTakeInModalOpen, 0);//0:彈跳視窗關閉, 1:彈跳視窗開啟
       window.close();
     }
     
@@ -81,7 +102,7 @@ export class TempListModalComponent implements OnInit {
       this.alarmMsg = "";
       this.isBlink = false;
       this.inputUserName = event.data.inputUserName;
-      this.inputTempDatas = JSON.parse(this._localStorageService.getLocalStorageData(this.ls_key_list_data));
+      this.inputTempDatas = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.tempListData);
       this.dataSource.data = this.inputTempDatas;
       this.tempDatasBackup = JSON.parse(JSON.stringify(this.inputTempDatas));//避免傳址參考跟著變動，用json轉物件做備份供資料恢復
 
@@ -330,7 +351,8 @@ export class TempListModalComponent implements OnInit {
     this.setLocalStorage();
   }
 
-  setLocalStorage() {
-    this._localStorageService.setLocalStorageData<PartNumber_Model_Desc[]>(this.ls_key_list_data, this.inputTempDatas);
+  setLocalStorage()
+  {
+    ls.set<PartNumber_Model_Desc[]>(LocalStorageKey.tempListData, this.inputTempDatas);
   }
 }

@@ -2,12 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseService } from './base.service';
-import { PartNumber_Model_Desc, BoxinProcessingData } from '../../shared/models/dto/response/box-in';
 import { IResultDto } from '../../shared/models/dto/result-dto';
 import { tap, map } from 'rxjs/operators';
 import { boxOutItem } from '../../shared/models/dto/request/box-out';
-import { LocalStorageService } from '../services/local-storage.service';
 import { boxOutQueryCondition } from '../../shared/models/dto/request/box-out-query-condition';
+import { LocalStorageKey } from '../../shared/models/localstorage-model';
+import * as ls from "local-storage";
+import { PartNumber_Model_Desc } from '../../shared/models/dto/response/box-in';
+
 
 @Injectable({
   providedIn: 'root'
@@ -16,22 +18,21 @@ export class BoxOutService extends BaseService {
 
   constructor
   (
-    private httpClient: HttpClient,
-    private _localStorageService: LocalStorageService
+    private httpClient: HttpClient
   ) {
     super();
   }
 
   //取出維護-查詢
-  queryMachines(data: boxOutQueryCondition, favorites: number[]): Observable<IResultDto<PartNumber_Model_Desc[]>>
+  queryMachines(pageIndex: number, pageSize: number, data: boxOutQueryCondition, favorites: number[]): Observable<IResultDto<any>>
   {
-    const url = "/BoxOut/QueryMachines";
+    const url = `/BoxOut/QueryMachines?pageIndex=${pageIndex}&pageSize=${pageSize}`;
     const options = this.generatePostOptions();
 
     data.favorites = favorites;
 
     return this.httpClient
-      .post<IResultDto<PartNumber_Model_Desc[]>>(url, data, options)
+      .post<IResultDto<any>>(url, data, options)
       .pipe(
         tap(() => {
           this.log("execute api QueryMachines.");
@@ -80,10 +81,12 @@ export class BoxOutService extends BaseService {
   getFavoritesId(): number[]
   {
     let favorites: number[] = [];
+    const arrayFavorites = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.myFavorite);
 
-    if (this._localStorageService.getLocalStorageData("my_favorite") != "undefined") {
-      let arrayFavorites = JSON.parse(this._localStorageService.getLocalStorageData("my_favorite"))
-      for (var i = 0; i < arrayFavorites.length; i++) {
+    if (arrayFavorites.length > 0)
+    {
+      for (var i = 0; i < arrayFavorites.length; i++)
+      {
         favorites.push(arrayFavorites[i].id);
       }
     }

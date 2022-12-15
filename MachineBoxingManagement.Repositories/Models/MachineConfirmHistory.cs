@@ -13,5 +13,6 @@ namespace MachineBoxingManagement.Repositories.Models
         public string ToOa { get; set; }
         public DateTime UpdateTime { get; set; }
         public string ProjectLeader { get; set; }
+        public string Remark { get; set; }
     }
 }

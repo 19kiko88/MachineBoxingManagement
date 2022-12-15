@@ -12,6 +12,7 @@ namespace MachineBoxingManagement.Services.Models
         public string BoxingName { get; set; }
         public int BoxingSerial { get; set; }
         public int? StackLevel { get; set; }
+        public string EQM掛帳人員 { get; set; }
         public string Model { get; set; }
         public string Description { get; set; }
         public string SSN { get; set; }

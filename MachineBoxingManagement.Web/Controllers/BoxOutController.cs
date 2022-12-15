@@ -31,17 +31,17 @@ namespace MachineBoxingManagement.Web.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public async Task<Result<List<PartNumber_Model_Desc>>> QueryMachines(Object_QueryMachines data)
+        public async Task<Result<Tuple<List<PartNumber_Model_Desc>, int>>> QueryMachines(int pageIndex, int pageSize, Object_QueryMachines data)
         {
             var errorMsg = string.Empty;
-            var result = new Result<List<PartNumber_Model_Desc>>() { Success = false };
+            var result = new Result<Tuple<List<PartNumber_Model_Desc>, int>>() { Success = false };
             DateTime sd = Convert.ToDateTime("0001/01/01 00:00:00");
             DateTime ed = Convert.ToDateTime("9999/12/31 23:59:59");
 
             try
             {
                 var buffer_areaCount = 0;
-                data.buffer_areas?.ToList().ForEach(c => buffer_areaCount += c);
+                data.buffer_areas?.ToList().ForEach(c => buffer_areaCount += c);//暫存區查詢條件：0 =>全不選, 1 => 非暫存區, 2=>暫存區, 3=>全選
 
                 var conditions = new MachineBoxingManagement.Services.Models.QueryRule()
                 {
@@ -55,10 +55,11 @@ namespace MachineBoxingManagement.Web.Controllers
                     OptionIds = data.options.ToList(),
                     StyleIds = data.styles.ToList(),
                     Statuses = data.statuses.ToList(),
-                    BufferAreas = buffer_areaCount//轉換暫存區查詢條件：0 =>全部選, 1 => 非暫存區, 2=>暫存區, 3=>全選
+                    BufferAreas = buffer_areaCount//轉換暫存區查詢條件：0 =>全不選, 1 => 非暫存區, 2=>暫存區, 3=>全選
                 };
                 var TupleRes = await _boxOutService.QueryMachines(conditions, data.favorites);
-                result.Content = TupleRes.Item1;
+                var pageFilterData = TupleRes.Item1.Skip(pageIndex * pageSize).Take(pageSize).ToList();
+                result.Content = new Tuple<List<PartNumber_Model_Desc>, int>(pageFilterData, TupleRes.Item1.Count);// TupleRes.Item1;
 
 
                 if (!string.IsNullOrEmpty(TupleRes.Item2))

@@ -1,7 +1,7 @@
 <form [formGroup]="boxInForm">
   <div class="form-row">
     <div class="form-group col-md-4">
-      <label>庫房：</label>
+      <label><span class="label-font">庫房：</span></label>
       <select #_sel_location
               class="form-control"
               name="sel_location"
@@ -12,7 +12,7 @@
       </select>
     </div>
     <div class="form-group col-md-4">
-      <label>機台選項：</label>
+      <label><span class="label-font">機台選項：</span></label>
       <select #_sel_option
               class="form-control"
               name="sel_option"
@@ -24,7 +24,7 @@
       </select>
     </div>
     <div class="form-group col-md-4">
-      <label>樣式選項：</label>
+      <label><span class="label-font">樣式選項：</span></label>
       <select #_sel_style
               class="form-control"
               name="sel_style"
@@ -40,7 +40,7 @@
 
   <div class="form-row">
     <div class="form-group col-md-4">
-      <label>P/N：</label>
+      <label><span class="label-font">P/N：</span></label>
       <input #_txt_pn
              name="txt_pn"
              formControlName="txt_pn"
@@ -55,7 +55,7 @@
 
   <div class="form-row">
     <div class="form-group col-md-4">
-      <label>SSN：</label>
+      <label><span class="label-font">SSN：</span></label>
       <input #_txt_ssn
              formControlName="txt_ssn"
              class="form-control">
@@ -64,7 +64,7 @@
 
   <div class="form-row">
     <div class="form-group col-md-4">
-      <label>Model：</label>
+      <label><span class="label-font">Model：</span></label>
       <input formControlName="txt_model"
              class="form-control">
     </div>
@@ -72,19 +72,19 @@
 
   <div class="form-row">
     <div class="form-group col-md-4">
-      <label>裝箱系列：</label>
+      <label><span class="label-font">裝箱系列：</span></label>
       <input #_txt_box_series
              formControlName="txt_box_series"
              class="form-control"
              (keyup.enter)="ProcessingBoxSeries(_txt_box_series.value, _sel_location.value, _chk_temp_save.checked)"
-            >
+             >
     </div>
   </div>
 
 
   <div class="form-row">
     <div class="form-group col-md-4">
-      <label>箱號：</label>
+      <label><span class="label-font">箱號：</span></label>
       <app-counter-plus-minus #_txt_box_serial
                               [inputMinValue]="1"
                               [inputMaxValue]="99999"
@@ -94,7 +94,7 @@
 
   <div class="form-row">
     <div class="form-group col-md-4">
-      <label>箱內數量：</label>
+      <label><span class="label-font">箱內數量：</span></label>
       <input formControlName="txt_box_qty"
              class="form-control"
              disabled>
@@ -102,7 +102,7 @@
     </div>
 
     <div class="form-group col-md-8" style="align-items:center; display:inline-flex">
-      <span style="text-align:center;" *ngIf="stocking_info_qty_desc" else alarm_msg>{{stocking_info_qty_desc}}</span>
+      <span style="text-align:center;" *ngIf="stocking_info_qty_desc" else alarm_msg class="alert-msg">{{stocking_info_qty_desc}}</span>
 
       <span #alarm_msg class=blink> {{alarmMsg}}</span>
     </div>
@@ -113,7 +113,7 @@
 
   <div class="form-row">
     <div class="form-group col-md-4">
-      <label>烏龜車層數：</label>
+      <label><span class="label-font">烏龜車層數：</span></label>
       <app-counter-plus-minus #_txt_box_turtle_level
                               [inputMinValue]="1"
                               [inputMaxValue]="5"></app-counter-plus-minus>
@@ -127,8 +127,8 @@
                formControlName ="chk_buffer_area"
                #_is_buffer_area
                type="checkbox"
-               />               
-        <label>暫存區</label>
+               />
+        <label><span class="label-font">暫存區</span></label>
       </div>
     </div>
 
@@ -138,7 +138,7 @@
                type="checkbox"
                [checked]="temp_save"
                (change)="onSaveCheckboxChange(_chk_temp_save.checked)" />
-        <label>立即暫存?</label>
+        <label><span class="label-font">立即暫存?</span></label>
       </div>
     </div>
   </div>

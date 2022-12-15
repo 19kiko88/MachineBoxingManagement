@@ -42,7 +42,7 @@ namespace MachineBoxingManagement.Services
                     curTakeAmount += tocnt;
 
                     var cmd = "select PN, CDT, SPEC_NOTE from EQP.EQP_QTY_NB_IDLE_INFO_V where " +
-                    $"PN in ('{string.Join("', '", tmppns)}')";
+                    $"PN in ('{string.Join("', '", tmppns.Select(a => a.ToUpper()))}')";
                     var gresult = _serviceClient.GetEBSProData(cmd);
                     //<PN>(.+)<\/PN>(\r\n|\r|\n).+<CDT>(.+)<\/CDT>(\r\n|\r|\n).+<SPEC_NOTE>(.+)<\/SPEC_NOTE>
                     if (gresult.Nodes.Count == 2)
