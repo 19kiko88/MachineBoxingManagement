@@ -1,4 +1,4 @@
-# Machine Boxing Management_v1.3.6
+# Machine Boxing Management_v1.9.1
 
 CAE 儲位管理(Frontent：Angular. Backend：.Net 6 Web API)
 
@@ -15,8 +15,8 @@ CAE 儲位管理(Frontent：Angular. Backend：.Net 6 Web API)
 - Angular Material：
     - mat-table
     - mat-checkbox(全選)
--ng-multiselect-dropdown v0.3.9(Angular Multiselect Dropdown多選下拉)
--local-storage v2.0.0(localStorage get.set可用強型別)
+- ng-multiselect-dropdown v0.3.9(Angular Multiselect Dropdown多選下拉)
+- local-storage v2.0.0(localStorage get.set可用強型別)
 
 ## Javascript API
 - postMessage：主要視窗<=>Popup視窗溝通(ex:主視窗關閉時，通知popup關閉)
