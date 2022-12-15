@@ -7,12 +7,17 @@ CAE 儲位管理(Frontent：Angular. Backend：.Net 6 Web API)
 - MachineBoxingManagement.Web=>主要專案(Angular + WebAPI)
 - MachineBoxingManagement.WinForm=>舊專案
 - MachineBoxingManagement.Service=>商業邏輯
+- MachineBoxingManagement.Tests=>單元測試(MSTest Framework)
+
 ## 前端使用套件
 - ng-bootstrap：
     - nav分頁頁籤功能
 - Angular Material：
     - mat-table
     - mat-checkbox(全選)
+-ng-multiselect-dropdown v0.3.9(Angular Multiselect Dropdown多選下拉)
+-local-storage v2.0.0(localStorage get.set可用強型別)
+
 ## Javascript API
 - postMessage：主要視窗<=>Popup視窗溝通(ex:主視窗關閉時，通知popup關閉)
 
