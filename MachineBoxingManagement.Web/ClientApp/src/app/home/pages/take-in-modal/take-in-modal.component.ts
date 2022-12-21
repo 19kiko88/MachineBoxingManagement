@@ -5,13 +5,13 @@ import { BoxInService } from '../../../core/http/box-in.service';
 import { ReportService } from '../../../core/http/report.service';
 import { SweetalertService } from '../../../core/services/sweetalert.service';
 import { PartNumber_Model_Desc } from '../../../shared/models/dto/response/box-in';
-import { ITakeInPostMessageDto } from '../../../shared/models/dto/takein-postmessage-dto'
 import { ActivatedRoute } from '@angular/router';
 import { SoundPlayService } from '../../../core/services/sound-play.service';
 import { Enum_Sound } from '../../../shared/models/enum/sound';
 import { LocalStorageKey } from '../../../shared/models/localstorage-model';
 import * as ls from "local-storage";
 import * as uuid from 'uuid';
+import { IPostMessage } from '../../../shared/models/post-message';
 
 @Component({
   selector: 'app-take-in-modal',
@@ -30,8 +30,6 @@ export class TempListModalComponent implements OnInit {
   selection_BufferArea = new SelectionModel<PartNumber_Model_Desc>(true, []);
   isLoading: boolean = false;
   selectType: string = "刪除?";
-  passData: ITakeInPostMessageDto = { inputUserName: "", inputData: null, isParentClose: false }
-  refreshMain: boolean = false;
   lastRow: number = 0;
   isFullBox: boolean;
   alarmMsg: string;
@@ -87,16 +85,9 @@ export class TempListModalComponent implements OnInit {
 
   /*監聽主畫面傳來的機台資訊*/
   @HostListener('window:message', ['$event'])
-  onMessage(event: MessageEvent<ITakeInPostMessageDto>): void
+  onMessage(event: MessageEvent<IPostMessage>): void
   {
-    //主畫面關閉，裝箱彈跳視窗跟著關閉
-    if (event.data.isParentClose)
-    {
-      ls.set<number>(LocalStorageKey.isTakeInModalOpen, 0);//0:彈跳視窗關閉, 1:彈跳視窗開啟
-      window.close();
-    }
-    
-    if (event.data.inputData)
+    if (event.data.boxinInputData)
     {
       this.isFullBox = false;
       this.alarmMsg = "";
@@ -113,13 +104,13 @@ export class TempListModalComponent implements OnInit {
       this.lastRow = this.inputTempDatas.length - 1;
 
 
-      this._boxInService.getStockingInfoByBoxSerial(event.data.inputData.boxing_Series, event.data.inputData.boxing_Location_Id, event.data.inputData.boxing_Serial, this.inputTempDatas).subscribe(
+      this._boxInService.getStockingInfoByBoxSerial(event.data.boxinInputData.boxing_Series, event.data.boxinInputData.boxing_Location_Id, event.data.boxinInputData.boxing_Serial, this.inputTempDatas).subscribe(
         res => {
           let data = res.content;
           if (data.qty == 20)
           {//over 20 pcs
             this.isBlink = true;
-            this.alarmMsg = `箱號：${event.data.inputData.boxing_Serial}。箱內機台數已滿上限!`
+            this.alarmMsg = `箱號：${event.data.boxinInputData.boxing_Serial}。箱內機台數已滿上限!`
             this.isFullBox = true;
             this._soundPlayService.playSound(Enum_Sound.Alarm)//play alarm audio
           }
@@ -138,9 +129,8 @@ export class TempListModalComponent implements OnInit {
   /*回傳更新StockingInfo通知給主畫面*/
   passRefreshParentSignal()
   {
-    this.refreshMain = true;
-    window.opener.postMessage(this.refreshMain, `${window.location.origin}`);
-    this.refreshMain = false;
+    const passData: IPostMessage = { refreshMain: true };
+    window.opener.postMessage(passData, `${window.location.origin}`);
   }
 
   isAllSelected() {

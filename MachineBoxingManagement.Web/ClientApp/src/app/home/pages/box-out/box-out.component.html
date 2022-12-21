@@ -65,8 +65,7 @@
       <div class="row">
         <div class="col-12">
           <label><span class="label-font">機台選項：</span></label>
-          <input formControlName="all_ckb_list_option" type="checkbox" (change)="onAllCheckBoxChange($event, 'ckb_list_option')">
-          <input class="btn-sm btn-primary" style="margin-left:10px" type="button" (click)="openOptionDetail()" value="複製機台選項" />
+          <input formControlName="all_ckb_list_option" type="checkbox" (change)="onAllCheckBoxChange($event.target.checked, 'ckb_list_option')">
         </div>
       </div>
 

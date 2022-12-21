@@ -12,10 +12,11 @@ import { SweetalertService } from './../../../core/services/sweetalert.service';
 import Swal from 'sweetalert2';
 import { SoundPlayService } from '../../../core/services/sound-play.service';
 import { Enum_Sound } from '../../../shared/models/enum/sound';
-import { ITakeInPostMessageDto } from '../../../shared/models/dto/takein-postmessage-dto'
 import { IResultDto } from '../../../shared/models/dto/result-dto';
 import { LocalStorageKey } from '../../../shared/models/localstorage-model';
 import * as ls from "local-storage";
+import { IPostMessage } from '../../../shared/models/post-message'
+import { ModalOptionDetailComponent } from '../box-out/modal-option-detail/modal-option-detail.component';
 
 @Component({
   selector: 'app-box-in',
@@ -26,7 +27,6 @@ import * as ls from "local-storage";
 export class BoxInComponent implements OnInit, OnChanges {
   @Input() activeNo: string;
   @Input() inputUserName: string;
-  @Input() isMultiOpen: boolean;
   @Input() inputUUID;
   @Output() outputUserName: EventEmitter<any> = new EventEmitter<any>();
   
@@ -78,10 +78,10 @@ export class BoxInComponent implements OnInit, OnChanges {
     private _boxInService: BoxInService,
     private _reportService: ReportService,
     private _swlService: SweetalertService,
-    private _soundPlayService: SoundPlayService
+    private _soundPlayService: SoundPlayService,
+    private _modalService: NgbModal
   )
   { }
-
 
   ngOnInit()
   {
@@ -91,18 +91,8 @@ export class BoxInComponent implements OnInit, OnChanges {
 
     /*主畫面關閉要通知彈跳視窗關閉*/
     window.addEventListener("beforeunload", (event) => {
-      let passData: ITakeInPostMessageDto = {
-        isParentClose: true
-      }
-      this.previewWindow.postMessage(passData, `${window.location.origin}/take_in_list`)
+      ls.set<number>(LocalStorageKey.isTakeInModalOpen, -1);
     }, false);
-
-
-    /*切換分頁後，this.previewWindow會變成undefinded。如果已經有開啟modal，就要再重新open一次取得previewWindow*/
-    if (ls.get<number>(LocalStorageKey.isTakeInModalOpen) == 1)
-    {
-      this.openWindow();
-    }
   }
 
   //ngOnChanges只在@Input變更時發生作用
@@ -124,9 +114,10 @@ export class BoxInComponent implements OnInit, OnChanges {
    * @param event
    */
   @HostListener('window:message', ['$event'])
-  onMessage(event: MessageEvent): void
+  onMessage(event: MessageEvent<IPostMessage>): void
   {
-    if (event.data.data) {
+    if (event.data.refreshMain)
+    {
       this.ProcessingPN(
         this.temp_save,
         this.boxInForm.controls["txt_pn"].value,
@@ -314,7 +305,7 @@ export class BoxInComponent implements OnInit, OnChanges {
       (!this.temp_save && !this.pn_model_desc)/*手動暫存查無機台資訊*/
     )
     {
-      this._swlService.showSwal("", "請先查詢P/N取得機台資訊.", "error");
+      this._swlService.showSwal("", "請先查詢P/N取得機台資訊.", "warning");
       return;
     }
 
@@ -417,7 +408,7 @@ export class BoxInComponent implements OnInit, OnChanges {
     var data = this.getPnDataList();
 
     if (data.length <= 0) {
-      this._swlService.showSwal("", "尚未刷入任一機台，無法批次儲存!", "warning");
+      this._swlService.showSwal("", "查無暫存資料，無法批次儲存!", "warning");
       this.isLoading = false;
       return;
     }
@@ -441,7 +432,8 @@ export class BoxInComponent implements OnInit, OnChanges {
                       this.ResetMachineInfo();
                       this.resetPnDataList();
                       this._swlService.showSwal("", `上傳完成，上傳資料筆數：${resSaveBoxingInfos.content}`, "warning");
-                      this.postData(true);
+                      ls.set<number>(LocalStorageKey.isTakeInModalOpen, -1);
+                      this.postData();
                       console.log(`SaveBoxingInfos done. save success count：${resSaveBoxingInfos.content}`);
 
                       //debugger;
@@ -479,7 +471,8 @@ export class BoxInComponent implements OnInit, OnChanges {
                     this.ResetMachineInfo();
                     this.resetPnDataList();
                     this._swlService.showSwal("", `上傳完成，上傳資料筆數：${res.content}`, "warning");
-                    this.postData(true);
+                    ls.set<number>(LocalStorageKey.isTakeInModalOpen, -1);
+                    this.postData();
                     this.isLoading = false;
                     this.outputUserName.emit("");                  }
                 },
@@ -549,38 +542,31 @@ export class BoxInComponent implements OnInit, OnChanges {
   //開啟彈跳視窗
   openWindow(): void
   {
-    if (this.isMultiOpen == false)
+    if (ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.tempListData).length > 0)
     {
-      // 開啟目標視窗，如視窗未完成開啟前即執行 postMessage() 會傳送無效
       /*
        * popup parameters setting :https://javascript.info/popup-windows
        */
       this.previewWindow = window.open(`take_in_list/${this.inputUserName}/${this.inputUUID}`, "Take In Machine", "width=800,height=850");
       ls.set<number>(LocalStorageKey.isTakeInModalOpen, 1);
     }
+    else
+    {
+      this._swlService.showSwal("", "查無暫存資料.", "warning");
+    }
   }
 
   /**
    * 處理postMessage要傳給彈跳視窗的參數
-   * @param isCloseWindow
    */
-  postData(isCloseWindow?:boolean): void
+  postData(): void
   {
-    if (!isCloseWindow)
+    const tempData = this.getPnDataList();
+
+    if (this.previewWindow)
     {
-      isCloseWindow = false;
-    }
-
-    let tempData = this.getPnDataList();
-    let passData: ITakeInPostMessageDto = {
-      inputUserName: this.inputUserName,
-      inputData: tempData[tempData.length - 1],
-      isParentClose: isCloseWindow
-    }
-
-    if (this.previewWindow) {
-      // 第二個參數 targetOrigin 為了示範使用故不指定，實務上應設定信任網域防止資訊外洩
-      this.previewWindow.postMessage(passData, `${window.location.origin}/take_in_list`);
+      const passData: IPostMessage = { inputUserName: this.inputUserName, boxinInputData: tempData[tempData.length - 1] }
+      this.previewWindow.postMessage(passData, `${window.location.origin}/take_in_list`);// 第二個參數 targetOrigin 為了示範使用故不指定，實務上應設定信任網域防止資訊外洩
     }
   }
 
@@ -598,4 +584,19 @@ export class BoxInComponent implements OnInit, OnChanges {
     });
   };
 
+  //機台選象複製內容
+  async openOptionDetail() {
+    const modalRef = this._modalService.open(ModalOptionDetailComponent);
+    let textOptions: string = '';
+
+    this._commonService.getBoxingOptions().subscribe(res => {
+      if (res.length > 0)
+      {
+        res.forEach(c => {
+          textOptions += `${c.name += c.remark}\r\n`;
+        });
+        modalRef.componentInstance.options = textOptions;
+      }
+    })
+  }
 }

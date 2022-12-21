@@ -5,7 +5,6 @@ import { BoxOutService } from '../../../core/http/box-out.service';
 import { ReportService } from '../../../core/http/report.service';
 import { SweetalertService } from '../../../core/services/sweetalert.service';
 import { PartNumber_Model_Desc } from '../../../shared/models/dto/response/box-in';
-import { ITakeOutPostMessageDto } from '../../../shared/models/dto/takeout-postmessage-dto'
 import { ActivatedRoute } from '@angular/router';
 import { SoundPlayService } from '../../../core/services/sound-play.service';
 import { Enum_Sound } from '../../../shared/models/enum/sound';
@@ -16,6 +15,7 @@ import { MatPaginator, MatPaginatorIntl, PageEvent } from '@angular/material/pag
 import { LocalStorageKey } from '../../../shared/models/localstorage-model';
 import * as ls from "local-storage";
 import * as uuid from 'uuid';
+import { IPostMessage } from '../../../shared/models/post-message';
 
 
 
@@ -37,8 +37,6 @@ export class TakeOutModalComponent implements OnInit {
   selection_BufferArea = new SelectionModel<PartNumber_Model_Desc>(true, []);
   selection_Favorite = new SelectionModel<PartNumber_Model_Desc>(true, []);
   isLoading: boolean = false;
-  passData: ITakeOutPostMessageDto = { inputUserName: "", inputData: null, isParentClose: false }
-  refreshMain: boolean = false;
   favorites: PartNumber_Model_Desc[] = ls.get<PartNumber_Model_Desc[]>(LocalStorageKey.myFavorite);
   @ViewChild('paginator') paginator: MatPaginator;
   pageEvent: PageEvent;
@@ -108,25 +106,18 @@ export class TakeOutModalComponent implements OnInit {
 
   /*監聽主畫面傳來的取出資訊*/
   @HostListener('window:message', ['$event'])
-  onMessage(event: MessageEvent<ITakeOutPostMessageDto>): void
+  onMessage(event: MessageEvent<IPostMessage>): void
   {
-    //主畫面關閉，取出彈跳視窗跟著關閉
-    if (event.data.isParentClose)
-    {
-      ls.set<number>(LocalStorageKey.isTakeOutModalOpen, 0);//0:彈跳視窗關閉, 1:彈跳視窗開啟
-      window.close();
-    }
-
     //變更查詢條件
-    if (event.data.inputData)
+    if (event.data.boxoutInputDatas)
     {
       this.inputUserName = event.data.inputUserName;
-      this.inputTempDatas = event.data.inputData;
-      this.dataSource.data = event.data.inputData;
+      this.inputTempDatas = event.data.boxoutInputDatas;
+      this.dataSource.data = event.data.boxoutInputDatas;
     }
 
     //變更暫存資料
-    if (event.data.favoriteChange)
+    if (event.data.queryMachines)
     {
       this.queryMachines();
     }
@@ -197,8 +188,9 @@ export class TakeOutModalComponent implements OnInit {
       "warning",
       //confirm callback function
       () => {
-        this.isLoading = true;//彈跳視窗loading遮罩
-        window.opener.postMessage({ isLoading: this.isLoading }, `${window.location.origin}`);//主畫面loading遮罩
+        this.isLoading = true;
+        const passData: IPostMessage = { isLoading: this.isLoading };//彈跳視窗loading遮罩
+        window.opener.postMessage(passData, `${window.location.origin}`);//通知主畫面變更loading遮罩
 
         //取得要取出的機台ID
         let resTotal: string = "";
@@ -268,7 +260,8 @@ export class TakeOutModalComponent implements OnInit {
 
             this._swlService.showSwalConfirm("", resTotal, "info",
               () => {
-                window.opener.postMessage({ resetOperator: true }, `${window.location.origin}`);//通知主畫面清空操作者
+                const passData: IPostMessage = { resetOperator: true };
+                window.opener.postMessage(passData, `${window.location.origin}`);//通知主畫面清空操作者
                 window.close();
               },null, null, null, false
             )
@@ -291,7 +284,8 @@ export class TakeOutModalComponent implements OnInit {
     let condition: boxOutQueryCondition = ls.get<boxOutQueryCondition>(LocalStorageKey.takeOutModalQueryCondition);
     this._boxOutService.queryMachines(pageIndex, pageSize, condition, this._boxOutService.getFavoritesId())
       .subscribe(
-        (res) => {
+        (res) =>
+        {
           if (res.message) {
             this._soundPlayService.playSound(Enum_Sound.Error);
             this._swlService.showSwal("", `錯誤：<br\>${res.message}`, "error");
@@ -324,19 +318,23 @@ export class TakeOutModalComponent implements OnInit {
                   });
             }
           }
-          else {            
-            this._swlService.showSwal("", "查無資料", "warning");
+          else
+          {            
+            this._swlService.showSwalConfirm("", "查無資料", "warning",
+              () => {
+                ls.set<number>(LocalStorageKey.isTakeOutModalOpen, -1);
+              }
+              , null, null, null, false)
           }
-          this.isLoading = false;
         },
         (err) => {
-          this.isLoading = false;
         },
         () => {
           this.isLoading = false;
 
           //主畫面增加loading遮罩
-          window.opener.postMessage({ isLoading: this.isLoading }, `${window.location.origin}`);
+          const passData: IPostMessage = { isLoading: this.isLoading };//彈跳視窗loading遮罩
+          window.opener.postMessage(passData, `${window.location.origin}`);
         }
       )
   }

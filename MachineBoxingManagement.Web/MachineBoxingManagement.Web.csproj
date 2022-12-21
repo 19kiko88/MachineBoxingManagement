@@ -106,9 +106,15 @@
     <None Remove="ClientApp\src\app\shared\favorite-button\favorite-button.component.ts" />
     <None Remove="ClientApp\src\app\shared\favorite-button\favorite-button.module.ts" />
     <None Remove="ClientApp\src\app\shared\models\dto\response\options.ts" />
+    <None Remove="ClientApp\src\app\shared\models\dto\result-dto.ts" />
+    <None Remove="ClientApp\src\app\shared\models\dto\takein-postmessage-dto.js" />
+    <None Remove="ClientApp\src\app\shared\models\dto\takein-postmessage-dto.js.map" />
     <None Remove="ClientApp\src\app\shared\models\dto\takein-postmessage-dto.ts" />
+    <None Remove="ClientApp\src\app\shared\models\dto\takeout-postmessage-dto.js" />
+    <None Remove="ClientApp\src\app\shared\models\dto\takeout-postmessage-dto.js.map" />
     <None Remove="ClientApp\src\app\shared\models\dto\takeout-postmessage-dto.ts" />
     <None Remove="ClientApp\src\app\shared\models\localstorage-model.ts" />
+    <None Remove="ClientApp\src\app\shared\models\post-message.ts" />
   </ItemGroup>
 
   <ItemGroup>
@@ -116,11 +122,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <TypeScriptCompile Include="ClientApp\src\app\shared\models\dto\takeout-postmessage-dto.ts">
-      <SubType>Code</SubType>
-    </TypeScriptCompile>
-    <TypeScriptCompile Include="ClientApp\src\app\shared\models\dto\takein-postmessage-dto.ts" />
     <TypeScriptCompile Include="ClientApp\src\app\shared\models\localstorage-model.ts" />
+    <TypeScriptCompile Include="ClientApp\src\app\shared\models\post-message.ts" />
   </ItemGroup>
 
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

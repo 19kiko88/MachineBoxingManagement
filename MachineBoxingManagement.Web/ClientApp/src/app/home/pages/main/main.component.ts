@@ -30,7 +30,6 @@ export class MainComponent implements OnInit {
   title = 'app';
   active = 1;
   userName = "";
-  isMultiOpen: boolean = false;
   userList = [];
   isLoading: boolean = false;
   initUUID: uuid = uuid.v4();//main.ts初始UUID
@@ -101,7 +100,6 @@ export class MainComponent implements OnInit {
         *  2.this.initJwt != currentJWT表示進行取得部門授權流程中，不進行this.initUUID != currentUUID檢核
         *  部門授權流程完成後，this.initJwt 就會等於 currentJWT，開始進行this.initUUID != currentUUID檢核
         * */
-        this.isMultiOpen = true;
 
         ls.set<number>(LocalStorageKey.isTakeInModalOpen, -1);//強制關閉裝箱維護modal
         ls.set<number>(LocalStorageKey.isTakeOutModalOpen, -1);//強制關閉取出維護modal

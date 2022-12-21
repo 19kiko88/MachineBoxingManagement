@@ -40,7 +40,10 @@
 
   <div class="form-row">
     <div class="form-group col-md-4">
-      <label><span class="label-font">P/N：</span></label>
+      <label>
+        <span class="label-font">P/N：</span>
+        <input class="btn-sm btn-primary" style="margin-left:10px" type="button" (click)="openOptionDetail()" value="複製機台選項" />
+      </label>
       <input #_txt_pn
              name="txt_pn"
              formControlName="txt_pn"
@@ -49,7 +52,7 @@
     </div>
 
     <div class="form-group col-md-8" style="align-items:center; display:inline-flex">
-      <span style="text-align:center;">{{pn_desc}}</span>
+      <span style="text-align:center;" class="alert-msg">{{pn_desc}}</span>
     </div>
   </div>
 
@@ -103,7 +106,6 @@
 
     <div class="form-group col-md-8" style="align-items:center; display:inline-flex">
       <span style="text-align:center;" *ngIf="stocking_info_qty_desc" else alarm_msg class="alert-msg">{{stocking_info_qty_desc}}</span>
-
       <span #alarm_msg class=blink> {{alarmMsg}}</span>
     </div>
 
